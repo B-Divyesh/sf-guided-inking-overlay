@@ -51,6 +51,19 @@ test('reference import stays separate from saved geometry', async ({ page }) => 
   await expect(page.locator('#reference-control')).toBeHidden();
 });
 
+test('checkout return stores and verifies the Studio license', async ({ page }) => {
+  await page.route('**/api/v1/products/guided-inking-overlay/verify?*', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ valid: true, reason: 'ok', expires_at: null }),
+  }));
+  await page.goto('/?license=test-license-token');
+  await expect(page).toHaveURL('/');
+  await expect(page.locator('#unlock-label')).toHaveText('Studio unlocked');
+  await expect(page.locator('#png-label')).toContainText('2400 × 1600');
+  expect(await page.evaluate(() => localStorage.getItem('sb_license:guided-inking-overlay'))).toBe('test-license-token');
+});
+
 test('legal pages have one heading and mobile layout does not overflow', async ({ page }) => {
   await page.goto('/privacy');
   await expect(page.getByRole('heading', { name: 'Privacy', level: 1 })).toHaveCount(1);

@@ -207,7 +207,8 @@ noscript { display: block; margin: 40px; padding: 20px; background: var(--paper)
   .controls { grid-template-columns: 1fr; padding: 18px 16px; }
   .panel-heading, .controls .history-row { grid-column: auto; }
   .canvas-bar { min-height: 66px; padding: 8px 10px; }
-  .canvas-actions .secondary, .canvas-actions .file-button span { display: none; }
+  .canvas-actions .file-button span { display: none; }
+  .canvas-actions .secondary { padding: 0 8px; font-size: 12px; }
   .canvas-actions .file-button { width: 46px; padding: 0; }
   .canvas-welcome { inset: 10px; grid-template-columns: 1fr; grid-template-rows: 80px 1fr; overflow: hidden; }
   .canvas-welcome img { height: 80px; min-height: 0; border-right: 0; border-bottom: 2px solid var(--ink); }

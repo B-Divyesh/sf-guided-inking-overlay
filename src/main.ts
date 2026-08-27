@@ -149,10 +149,12 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 function mount(): void {
   const route = location.pathname.replace(/\/$/, '') || '/';
   if (route === '/privacy' || route === '/terms') {
+    document.title = `${route === '/privacy' ? 'Privacy' : 'Terms'} — Ink Guides`;
     app.innerHTML = legalPage(route.slice(1) as 'privacy' | 'terms');
     bindRoutes();
     return;
   }
+  document.title = 'Ink Guides — perspective fans & spline rails';
   app.innerHTML = studioPage();
   bindRoutes();
   bindStudio();
