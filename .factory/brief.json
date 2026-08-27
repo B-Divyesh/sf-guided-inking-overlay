@@ -1,0 +1,11 @@
+{
+  "slug": "guided-inking-overlay",
+  "title": "Ink Guides",
+  "territory": "games-creative",
+  "user": "Comic and concept artists who need reusable rotated perspective and curved parallel guides while inking, including on lightweight tablet/browser setups.",
+  "smallest_useful_product": "A transparent browser/canvas overlay where a user saves guide scenes, adjusts fan density/rotation and spline offsets, imports a reference image, and exports SVG/PNG guide layers.",
+  "success_measure": "Test artists create a reusable guide scene and complete a five-line perspective correction with fewer than three manual redraws.",
+  "artifact_class": "static-web",
+  "monetization": "one-time",
+  "constraints": "Support pen and touch input; do not upload artwork; SVG export must retain only user-created geometry."
+}
