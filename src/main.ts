@@ -204,7 +204,7 @@ function pushUndo(): void {
 }
 
 function bindStudio(): void {
-  document.querySelectorAll<HTMLButtonElement>('[data-tool]').forEach((button) => button.addEventListener('click', () => setTool(button.dataset.tool as Tool)));
+  document.querySelectorAll<HTMLButtonElement>('.tool[data-tool]').forEach((button) => button.addEventListener('click', () => setTool(button.dataset.tool as Tool)));
   bindRange('density', () => state.fan.density, (value) => state.fan.density = value);
   bindRange('rotation', () => state.fan.rotation, (value) => state.fan.rotation = value, '°');
   bindRange('spread', () => state.fan.spread, (value) => state.fan.spread = value, '°');
@@ -287,7 +287,7 @@ function refreshControls(): void {
 
 function setTool(next: Tool): void {
   tool = next;
-  document.querySelectorAll<HTMLButtonElement>('[data-tool]').forEach((button) => {
+  document.querySelectorAll<HTMLButtonElement>('.tool[data-tool]').forEach((button) => {
     const active = button.dataset.tool === next;
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', String(active));

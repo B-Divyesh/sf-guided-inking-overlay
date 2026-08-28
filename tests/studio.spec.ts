@@ -95,6 +95,16 @@ test('keyboard shortcuts and canvas arrow controls remain operable', async ({ pa
   await expect(page.getByRole('button', { name: /Draw spline/ })).toHaveAttribute('aria-pressed', 'true');
 });
 
+test('changing tools repeatedly keeps pressed state on tool buttons only', async ({ page }) => {
+  await page.getByRole('button', { name: 'Start transparent' }).click();
+  await page.getByRole('button', { name: /Aim fan/ }).click();
+  await page.getByRole('button', { name: /Draw spline/ }).click();
+
+  await expect(page.locator('#canvas-shell')).not.toHaveAttribute('aria-pressed');
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
+});
+
 test('a fresh studio load makes no third-party requests', async ({ page }) => {
   const externalRequests: string[] = [];
   page.on('request', (request) => {
