@@ -1,4 +1,4 @@
-# Ink Guides v1 repair handoff — local verification PASS
+# Ink Guides v1 repair handoff — PASS
 
 ## Repair scope
 
@@ -40,7 +40,11 @@ npm run test:e2e -- --workers=4 --reporter=list
 
 ## Deployment and live verification
 
-The repair commit is pushed to `main`, which is the configured Azure Static Web Apps deployment source. Post-deployment live identity and response-policy evidence is recorded below once the deployment completes.
+Repair commit `8d133f7797ce9226dae98360e2c4511f90654d4b` is pushed to `main` and the verified `dist/` artifact was deployed to the configured Azure Static Web App `sf-guided-inking-overlay` production environment on 2026-08-28 UTC. The deployment key was rotated after the upload.
+
+- Live `https://guided-inking-overlay.sociobot.in/` returned HTTP 200 and matched the local built bytes by SHA-256 for `index.html`, `sw.js`, the hashed JS/CSS, and the WebP hero. The deployed worker is `ink-guides-ab971e453c681c12`, not the retired fixed `ink-guides-v1` cache.
+- Live root response includes the configured CSP (with `frame-ancestors 'none'`) and `X-Frame-Options: DENY`. Live `/assets/index-C9Sm_TSD.js` returns `Cache-Control: public, max-age=31536000, immutable`.
+- Live `/opt/fleet/lib/verify-url.sh` verification passed: HTTP 200; correct title and language; one h1; main landmark; zero images without alt; zero unnamed buttons; no console/page errors; 858ms browser load. The verifier captured both desktop and 390 × 844 mobile screenshots.
 
 ## Known gaps / next steps
 
