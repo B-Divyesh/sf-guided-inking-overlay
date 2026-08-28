@@ -72,3 +72,50 @@ test('legal pages have one heading and mobile layout does not overflow', async (
   await page.getByRole('link', { name: 'Back to studio' }).click();
   await expect(page).toHaveURL('/');
 });
+
+test('390px welcome actions meet the 44px touch-target requirement', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const name of ['Choose reference', 'Start transparent']) {
+    const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+    expect(box, `${name} should be visible`).not.toBeNull();
+    expect(box!.height, `${name} height`).toBeGreaterThanOrEqual(44);
+    expect(box!.width, `${name} width`).toBeGreaterThanOrEqual(44);
+  }
+});
+
+test('keyboard shortcuts and canvas arrow controls remain operable', async ({ page }) => {
+  await page.getByRole('button', { name: 'Start transparent' }).click();
+  const canvas = page.getByLabel(/Guide canvas/);
+  await canvas.focus();
+  await page.keyboard.press('f');
+  await expect(page.getByRole('button', { name: /Aim fan/ })).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('button', { name: /Undo/ })).toBeEnabled();
+  await page.keyboard.press('s');
+  await expect(page.getByRole('button', { name: /Draw spline/ })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('a fresh studio load makes no third-party requests', async ({ page }) => {
+  const externalRequests: string[] = [];
+  page.on('request', (request) => {
+    if (new URL(request.url()).origin !== new URL(page.url()).origin) externalRequests.push(request.url());
+  });
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  expect(externalRequests).toEqual([]);
+});
+
+test('the installed shell remains usable during an offline reload', async ({ page, context }) => {
+  await page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.ready;
+    await registration.update();
+  });
+  await page.reload();
+  await expect(page).toHaveTitle(/Ink Guides/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page).toHaveTitle(/Ink Guides/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await context.setOffline(false);
+});

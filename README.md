@@ -21,7 +21,7 @@ The useful free tier includes guide creation, three local scenes, SVG export, an
 Requires Node.js 20 or newer.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
@@ -31,11 +31,13 @@ The development server prints its local URL. No API key or backend is needed for
 
 ```sh
 npm test
+npm run typecheck
+npm run lint
 npm run build
 npm run test:e2e
 ```
 
-`npm run build` type-checks the app and writes the static deployment to `dist/`, with `dist/index.html` at its root. End-to-end tests use pinned Playwright 1.58.2 and include desktop, 390px mobile, Axe accessibility, console, import, drawing, local persistence, routing, and SVG-export checks.
+`npm run build` type-checks the app, creates a content-versioned service worker cache, and writes the static deployment to `dist/`, with `dist/index.html` at its root. End-to-end tests use pinned Playwright 1.58.2 and include desktop, 390px mobile, Axe accessibility, console, import, drawing, local persistence, routing, SVG export, keyboard, touch-target, and offline-shell checks.
 
 If Playwright browsers are not already available:
 
@@ -45,7 +47,7 @@ npx playwright install chromium
 
 ## Deployment and configuration
 
-Deploy the contents of `dist/` to Azure Static Web Apps. `public/staticwebapp.config.json` supplies SPA navigation fallback and security headers.
+Deploy the contents of `dist/` to Azure Static Web Apps. `public/staticwebapp.config.json` supplies SPA navigation fallback, immutable asset caching, and security headers including CSP/frame protection.
 
 The production billing base defaults to `https://api.sociobot.in`. A staging build can use the factory’s pilot endpoint without changing source:
 

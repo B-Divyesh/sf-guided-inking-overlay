@@ -216,7 +216,7 @@ noscript { display: block; margin: 40px; padding: 20px; background: var(--paper)
   .canvas-welcome .eyebrow, .canvas-welcome p:not(.eyebrow) { display: none; }
   .canvas-welcome h2 { font-size: 21px; margin-bottom: 0; }
   .canvas-welcome > div > div { display: grid; grid-template-columns: 1fr 1fr; margin-top: 8px; gap: 7px; }
-  .canvas-welcome button { min-height: 38px; padding: 0 6px; font-size: 11px; }
+  .canvas-welcome button { min-height: 44px; padding: 0 6px; font-size: 11px; }
   .lower-bench { margin-top: 24px; gap: 18px; }
   .scene-section, .export-section { padding: 20px 16px; }
   .save-row > div { grid-template-columns: 1fr; }

@@ -1,48 +1,49 @@
-# Ink Guides v1 handoff — **FAIL**
+# Ink Guides v1 repair handoff — local verification PASS
 
-## Verification status (2026-08-28 UTC)
+## Repair scope
 
-Independent QA of candidate `6dce357f943a538b025b1c5ab3e540f80fb1a605` against <https://guided-inking-overlay.sociobot.in> is **FAIL**. The live deployment matches the candidate byte-for-byte, clean install/tests/build pass, and the core drawing/export/privacy flows work; however, it must not be promoted until the following P1 defects are fixed:
+This repair resolves every issue recorded by the independent verifier for candidate `6dce357f943a538b025b1c5ab3e540f80fb1a605`:
 
-1. The service worker cache is fixed at `ink-guides-v1` and cache-first. An update reuses the old cache rather than invalidating its previously cached shell, so returning offline users can remain on stale application bytes.
-2. At the required 390px viewport, “Choose reference” and “Start transparent” measure 38px high, below the required 44px touch target.
+1. **Service-worker update correctness (P1):** `npm run build` now generates `dist/sw.js` with an `ink-guides-<release>` cache name derived from the built artifact (or the deployment `GITHUB_SHA`/`SWA_RELEASE_ID`). Activation removes all prior Ink Guides caches. Navigations are network-first online and fall back to the current cache only while offline, so a newly deployed shell replaces an obsolete offline shell.
+2. **390px touch targets (P1):** the two welcome actions now have a 44px minimum height at the mobile breakpoint.
+3. **Asset caching (P2):** Azure Static Web Apps now serves `/assets/*` with `Cache-Control: public, max-age=31536000, immutable`.
+4. **Response policy (P2):** Azure Static Web Apps now sends CSP, `frame-ancestors 'none'`, and `X-Frame-Options: DENY`, while retaining the existing privacy/security headers. The policy permits only same-origin resources, local blob/data images, and the production/pilot Sociobot billing APIs required by the existing license flow.
 
-Additional P2 findings: hashed live JS/CSS/image assets have only `max-age=30` rather than immutable caching, and live responses omit CSP/frame protection. Full independent evidence, exact commands, pass results, and remediation are in [`.factory/verification.md`](verification.md).
+The researched brief, static/Vite deployment class, visual system, local-first artwork flow, and all previously passing product behavior are unchanged.
 
-## Shipped
+## Regression coverage
 
-- A responsive, local-first guide studio for rotated perspective fans and offset spline rails.
-- Mouse, pen, and touch drawing via Pointer Events; draggable vanishing-point pin; density, rotation, spread, rail count/spacing, opacity, and weight controls.
-- Keyboard paths: V/F/S tool shortcuts, focusable canvas, arrow/Shift-arrow nudging, Delete, undo/redo, visible focus states, and native accessible dialogs.
-- Private reference-image underlay with opacity control, decode/error/size handling, and explicit removal. References never leave the browser, persist in scenes, or enter exports.
-- Named local scene shelf with load/delete/empty/full/error states. Free tier holds 3 scenes; Studio holds 20.
-- Transparent geometry-only SVG and PNG export. Free PNG is 1200×800; Studio PNG is 2400×1600. SVG remains free.
-- $9 one-time Studio purchase UI using the Sociobot checkout/verify contract, return-token capture, daily verdict cache, optimistic offline unlock, paste-to-restore, and device removal. There is no hardcoded product ID.
-- Offline shell/service worker, online/offline status, Azure Static Web Apps SPA fallback and security headers.
-- Product-specific paper-cut diorama design system, original generated welcome art, responsive mobile layout, privacy/terms routes, manifest, favicon, robots, and sitemap.
+- `src/service-worker-regression.test.ts` executes the real worker template in an in-memory Cache API model, installs an old release then a new release, and proves the old cache is deleted and the offline shell resolves to the new bytes. It also asserts the immutable-cache and anti-framing deployment configuration.
+- `tests/studio.spec.ts` asserts both welcome actions are at least 44 × 44 CSS px at 390px, verifies keyboard F/S and canvas arrow behavior, verifies an installed shell reloads offline, and asserts a fresh load sends no third-party request.
 
-## Builder verification (superseded by independent FAIL above)
+## Exact local verification (2026-08-28 UTC)
 
-Run from a clean checkout:
+From a clean install:
 
 ```sh
-npm install
+npm ci
 npm test
+npm run typecheck
+npm run lint
 npm run build
-npm run test:e2e
+npm run test:e2e -- --workers=4 --reporter=list
 ```
 
-- `npm test`: 6/6 geometry unit tests pass.
-- `npm run build`: passes TypeScript and Vite build; `dist/index.html` is at the deployment root.
-- `npm run test:e2e`: 8/8 Chromium checks pass across desktop and 390×844 mobile. Coverage includes drawing a spline, local scene save, reference import/removal, geometry-only SVG download, purchase-return verification, legal routing, console errors, mobile overflow, and Axe serious/critical findings.
-- Lighthouse 13.4.1 mobile against the production preview: Performance 100, Accessibility 100, Best Practices 100, SEO 100. FCP 0.9 s, LCP 1.7 s, CLS 0, TBT 0 ms.
-- Production payload: 29.47 KB JS (11.06 KB gzip), 16.81 KB CSS (4.83 KB gzip), 59 KB WebP hero. No runtime dependencies, external scripts, CDN fonts, or analytics.
-- Generated hero was visually reviewed: no people, text artifacts, brands, logos, watermarks, or misleading UI. Source, sidecar, exact prompt, date, and provenance are under `assets/src/`; delivery WebP is 960×640 and 59 KB.
+- `npm ci`: pass; 62 packages audited, 0 vulnerabilities.
+- `npm test`: pass; 9/9 tests (6 geometry + 3 service-worker/deployment-policy regressions).
+- `npm run typecheck` and `npm run lint`: pass. `lint` deliberately uses strict TypeScript because this small static app has no separate source-style linter.
+- `npm run build`: pass; `dist/index.html` is at the deployment root and generated `dist/sw.js` uses cache `ink-guides-ab971e453c681c12` for this local artifact.
+- `npm run test:e2e -- --workers=4 --reporter=list`: pass; 16/16 Chromium checks (desktop and 390 × 844 mobile). This includes full guide creation/export, local scene behavior, reference privacy, mocked license return, legal routes, console errors, Axe serious/critical checks, 44px actions, keyboard, no-third-party network, and offline shell reload.
+- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173/ <temp-dir>`: pass. HTTP 200; title present; `lang=en`; exactly one h1; main landmark; zero images missing alt; zero unnamed buttons; no console/page errors; local preview load 636ms.
+- Production artifact budgets: JS 29,597 bytes raw / 11,100 gzip; CSS 16,806 bytes raw / 4,830 gzip; hero WebP 59,282 bytes. All remain below the static-product budgets.
+- Lighthouse 13.0.3 was attempted against the local production preview with the supplied Playwright Chromium, but Chrome crashed during trace/audit collection with `TARGET_CRASHED` (the same environment limitation noted by the independent verifier). No Lighthouse score is claimed; deterministic Playwright/Axe and bundle-budget checks above passed.
 
-## Known gaps / factory follow-up
+## Deployment and live verification
 
-- The billing product must still be registered by the factory. Production defaults to `api.sociobot.in`; staging can set `VITE_BILLING_API_BASE=https://pilot-api.sociobot.in` at build time.
-- Reference images intentionally are not persisted with scenes for privacy and storage safety; artists reselect the reference after reload.
-- Offline use begins after one successful online load so the service worker can cache the hashed shell.
-- The v1 artboard/export ratio is a fixed landscape 1200×800 (or 2× Studio), matching the compact-overlay scope; custom artboard dimensions are a sensible later enhancement.
-- Before release, version and rotate service-worker caches, test a two-version update/offline scenario, restore 44px mobile welcome targets, and configure immutable hashed-asset caching plus CSP/frame protection. Rerun independent QA afterward.
+The repair commit is pushed to `main`, which is the configured Azure Static Web Apps deployment source. Post-deployment live identity and response-policy evidence is recorded below once the deployment completes.
+
+## Known gaps / next steps
+
+- There are no known release-blocking product gaps.
+- The billing product registration remains a factory responsibility. The existing production API default and pilot-build override are preserved.
+- Re-run Lighthouse in an environment whose Chromium supports trace collection if a scored mobile report is required; this does not affect the completed functional/accessibility checks.
