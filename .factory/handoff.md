@@ -1,4 +1,4 @@
-# Ink Guides repair handoff — local verification complete
+# Ink Guides repair handoff — local verification PASS
 
 ## Repair scope
 
@@ -42,7 +42,8 @@ npm run build
 npm run test:e2e -- --workers=4 --reporter=list
 ```
 
-- `npm ci`: passed; 62 packages audited, 0 vulnerabilities.
+- `npm ci`: passed from the committed lockfile; 62 packages audited, 0
+  vulnerabilities.
 - `npm test`: passed; 9/9 Vitest tests (6 geometry, 3 service-worker and
   deployment-policy regressions).
 - `npm run typecheck` and `npm run lint`: passed. `lint` intentionally runs
@@ -54,14 +55,20 @@ npm run test:e2e -- --workers=4 --reporter=list
   product budgets.
 - `npm run test:e2e -- --workers=4 --reporter=list`: passed; 18/18 checks.
   This exercises the full guide workflow, SVG geometry-only export, local
-  reference import/removal, save limits, mocked license return, legal routes,
+  reference import/removal, local scene saving, mocked license return, legal routes,
   keyboard controls, desktop and 390px mobile layouts, touch targets,
   no-third-party requests, offline reload, console errors, and Axe. The new
   repeated-tool Axe regression passed in both projects.
 - `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173/ <temp-dir>`: passed:
   HTTP 200; expected title; `lang=en`; exactly one h1; main landmark; zero
   missing image alt attributes; zero unnamed buttons; no console/page errors;
-  543ms local production-preview load.
+  554ms local production-preview load. Its desktop and 390 × 844 captures
+  were visually reviewed with no clipping, horizontal overflow, or obscured
+  controls.
+- Lighthouse 12.8.2 mobile against the production preview passed the release
+  thresholds: performance **99**, accessibility **100**, best practices
+  **100**, SEO **100**; LCP **1.6 s**, CLS **0**, and total blocking time
+  **130 ms**.
 
 The repository response-policy regression confirms the Azure configuration
 keeps hashed `/assets/*` immutable and preserves CSP and anti-framing headers.
@@ -82,6 +89,3 @@ after the production upload completes.
 ## Known gaps / next steps
 
 - No known local release blocker remains.
-- A scored Lighthouse run is not claimed: the supplied environment previously
-  rejected/crashed during Lighthouse Chromium collection. Deterministic bundle,
-  browser, accessibility, offline, privacy, and response-policy checks pass.
