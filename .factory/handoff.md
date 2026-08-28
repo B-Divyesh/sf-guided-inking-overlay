@@ -1,4 +1,13 @@
-# Ink Guides v1 handoff
+# Ink Guides v1 handoff — **FAIL**
+
+## Verification status (2026-08-28 UTC)
+
+Independent QA of candidate `6dce357f943a538b025b1c5ab3e540f80fb1a605` against <https://guided-inking-overlay.sociobot.in> is **FAIL**. The live deployment matches the candidate byte-for-byte, clean install/tests/build pass, and the core drawing/export/privacy flows work; however, it must not be promoted until the following P1 defects are fixed:
+
+1. The service worker cache is fixed at `ink-guides-v1` and cache-first. An update reuses the old cache rather than invalidating its previously cached shell, so returning offline users can remain on stale application bytes.
+2. At the required 390px viewport, “Choose reference” and “Start transparent” measure 38px high, below the required 44px touch target.
+
+Additional P2 findings: hashed live JS/CSS/image assets have only `max-age=30` rather than immutable caching, and live responses omit CSP/frame protection. Full independent evidence, exact commands, pass results, and remediation are in [`.factory/verification.md`](verification.md).
 
 ## Shipped
 
@@ -12,7 +21,7 @@
 - Offline shell/service worker, online/offline status, Azure Static Web Apps SPA fallback and security headers.
 - Product-specific paper-cut diorama design system, original generated welcome art, responsive mobile layout, privacy/terms routes, manifest, favicon, robots, and sitemap.
 
-## Verification
+## Builder verification (superseded by independent FAIL above)
 
 Run from a clean checkout:
 
@@ -36,3 +45,4 @@ npm run test:e2e
 - Reference images intentionally are not persisted with scenes for privacy and storage safety; artists reselect the reference after reload.
 - Offline use begins after one successful online load so the service worker can cache the hashed shell.
 - The v1 artboard/export ratio is a fixed landscape 1200×800 (or 2× Studio), matching the compact-overlay scope; custom artboard dimensions are a sensible later enhancement.
+- Before release, version and rotate service-worker caches, test a two-version update/offline scenario, restore 44px mobile welcome targets, and configure immutable hashed-asset caching plus CSP/frame protection. Rerun independent QA afterward.
