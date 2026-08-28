@@ -1,4 +1,4 @@
-# Ink Guides repair handoff — local verification PASS
+# Ink Guides repair handoff — PASS
 
 ## Repair scope
 
@@ -80,11 +80,31 @@ not a published library.
 ## Deployment and live verification
 
 Repair code commit: `e0e534cdc44b99d07c3fd8fd47f19bdc54528203`.
+Local verification commit: `fff4d6c`.
 
-The repair is ready for deployment to the configured Azure Static Web App
-`sf-guided-inking-overlay` production environment. Add the deployment result,
-live byte identity, response headers, and post-deploy URL verification here
-after the production upload completes.
+The verified `dist/` was deployed on 2026-08-28 to the configured Azure Static
+Web App `sf-guided-inking-overlay` production environment. Azure deployment ID:
+`e9146fdf-afb6-4c7b-b093-389e8125c5cd`.
+
+- Fresh SHA-256 comparisons matched local `dist/` exactly against production
+  for `index.html`, `sw.js`, `assets/index-CiOBn7JJ.js`,
+  `assets/index-BroQw4Fl.css`, and `assets/hero-paper-diorama.webp`. The live
+  root references those same hashed assets and the live worker uses cache
+  `ink-guides-54dca19c14b7245c`.
+- `/opt/fleet/lib/verify-url.sh https://guided-inking-overlay.sociobot.in/`
+  passed: HTTP 200, 688ms browser load, expected title and `lang=en`, exactly
+  one h1 and one main landmark, zero images missing alt text, zero unnamed
+  buttons, and no console/page errors.
+- Independent fresh live desktop and 390 × 844 browser contexts performed the
+  exact Aim fan → Draw spline sequence. In both, `#canvas-shell` had no
+  `aria-pressed`, Axe found zero serious/critical violations, the page had no
+  horizontal overflow, and there were zero console errors or cross-origin
+  resource requests. The tool target measured 48px high. A live installed
+  shell also reloaded successfully while the browser context was offline.
+- The live root sends HSTS, `nosniff`, `Referrer-Policy`,
+  `Permissions-Policy`, `X-Frame-Options: DENY`, and CSP with
+  `frame-ancestors 'none'`. The hashed JavaScript asset sends
+  `Cache-Control: public, max-age=31536000, immutable`.
 
 ## Known gaps / next steps
 
