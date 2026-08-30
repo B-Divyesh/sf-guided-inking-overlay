@@ -10,7 +10,8 @@
     "build": "npm run typecheck && vite build && node scripts/build-service-worker.mjs",
     "preview": "vite preview",
     "test": "vitest run src",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "check:billing-live": "node scripts/check-billing-live.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10.2",

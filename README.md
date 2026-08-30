@@ -45,9 +45,10 @@ npm run typecheck
 npm run lint
 npm run build
 npm run test:e2e
+npm run check:billing-live
 ```
 
-`npm run build` writes the static product to `dist/`. End-to-end tests use Playwright 1.58.2 on desktop and 390px mobile Chromium.
+`npm run build` writes the static product to `dist/`. End-to-end tests use Playwright 1.58.2 on desktop and 390px mobile Chromium. The Playwright server builds before it previews, so each exact command in `.factory/claims.json` also works from a clean checkout with no `dist/` directory. `npm run check:billing-live` uses an invalid token only; it verifies the production billing API's browser CORS verdict and hosted checkout redirect without starting a purchase.
 
 Run any claim from a clean state with its command in `.factory/claims.json`. For example:
 
