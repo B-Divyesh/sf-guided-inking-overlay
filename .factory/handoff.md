@@ -1,27 +1,41 @@
-# Ink Guides verification 7 handoff — FAIL
+# Ink Guides repair 7 handoff — PASS
 
-## Current independent release decision
+## Release decision
 
-**FAIL — do not promote candidate `a2bf1c0f6007360ee24e25bbfb0d2bafe9966684`.** Fresh live verification at <https://guided-inking-overlay.sociobot.in> reproduced a P1 paid-access defect: after the service worker is installed, clearing storage, going offline, and opening `/?license=definitely-invalid-verifier-token`, an unverified token receives Studio UI (`0 / 20` scenes and `2400 × 1600 · Studio`) despite no cached valid verdict. The status says the license service could not be reached. This violates the paid-unlock contract.
+**PASS — candidate `a2bf1c0f6007360ee24e25bbfb0d2bafe9966684` is repaired by source commit `a3dcac1` (`fix: require verified offline Studio verdict`) and deployed to <https://guided-inking-overlay.sociobot.in>.**
 
-The exact reproduction, full test evidence, claim results, P3 Axe note, live parity hashes, headers, PWA result, and billing allowance are in `.factory/verification-7.md`.
+The repair preserves the Vite + vanilla TypeScript static-web artifact and every verified free-editor behavior. It adds no backend, tracking, external font, or new runtime dependency.
 
-Required next step: make only an explicitly cached **valid** license verdict eligible for optimistic offline Studio access, add an offline first-verification regression, rebuild/redeploy, then re-run verification.
+## Findings repaired
 
----
+1. **P1: a never-verified offline `?license=` return unlocked Studio.** The old `cached?.valid !== false` expression treated a missing cached verdict as valid. License verdict records now contain the license token, validity, and check time. Studio is optimistic only when the cached verdict is explicitly `valid: true` **and** belongs to the active token. A returned or pasted token locks the paid UI while its first verification is pending. A matching cached valid verdict still unlocks offline.
+2. **P3: nested complementary landmark.** The guide controls are now a normal editor panel, and the demo message is a `note`; there is no `aside`/complementary landmark nested in the main editor.
 
-## Outcome
+## Regression coverage
 
-Repair commit: `73e2eec7fa64801ac545d01492124cffed99a859` (`fix: make claims clean-checkout reproducible`).
+`tests/studio.spec.ts` adds browser/PWA regressions in both desktop Chromium and the 390 × 844 mobile project:
 
-Verification 6 found two P1 failures. Both now have fresh evidence:
+- first-time service-worker-controlled offline `/?license=…` stays at `0 / 3` and `1200 × 800 · free`;
+- a matching verified cached token stays at `0 / 20` and `2400 × 1600 · Studio` while offline;
+- a different returned token cannot borrow an earlier valid cached verdict; and
+- the demo has no `landmark-complementary-is-top-level` Axe violation.
 
-1. **Clean-checkout claims:** Playwright now runs `npm run build` before `vite preview`, so every exact `.factory/claims.json` command is self-sufficient when `dist/` does not exist. `src/release-contract.test.ts` locks that contract in place.
-2. **Studio billing:** The required Sociobot endpoints have recovered. `scripts/check-billing-live.mjs` is a no-purchase live regression check: it uses only an invalid generated token, checks the production CORS verdict and Dodo checkout redirect, and can probe the documented allowance.
+The original source failed the first regression with `0 / 20`; it now passes. Live, in a fresh controlled browser context after storage was cleared and offline mode was enabled, the exact verifier path produced:
 
-The static-web artifact and product behavior are preserved. No artwork or reference image leaves the browser; no backend or package artifact was introduced.
+```json
+{
+  "controlled": true,
+  "online": false,
+  "studioLabel": "Studio",
+  "pngLabel": "1200 × 800 · free",
+  "sceneCount": "0 / 3",
+  "storedLicense": "definitely-invalid-live-regression-token",
+  "cachedVerdict": null,
+  "status": "Could not reach the license service. Your free workspace still works; try again when online."
+}
+```
 
-## Clean verification — 2026-08-30 UTC
+## Verification performed — 2026-08-30 UTC
 
 ```sh
 npm ci
@@ -29,55 +43,47 @@ npm test
 npm run typecheck
 npm run lint
 npm run build
-npm run test:e2e -- --workers=4 --reporter=list
+npm run test:e2e -- --workers=4 --reporter=line
 npm run check:billing-live -- --rate-limit
 ```
 
-- Clean install: 61 packages installed, 62 audited, 0 vulnerabilities.
-- Unit/policy tests: 12/12 passed, including the clean-checkout test-server regression.
-- Typecheck and lint: passed.
-- Production build: passed; `dist/index.html` is at the required static root.
-- Claims: all 12 exact commands in `.factory/claims.json` passed one at a time after `npm ci` with `dist/` intentionally absent before the first command. Each command built and served its own production preview.
-- Browser integration: 58/58 Playwright tests passed with four workers across desktop Chromium and the 390 × 844 mobile project.
-- Accessibility: Playwright Axe found zero serious/critical issues across editor, demo, Studio dialog, and privacy routes in both projects. Coverage includes one h1, landmarks, route focus/live announcements, keyboard V/F/S, arrows, Shift movement, Delete, 44 px mobile targets, actual pen and touch drawing, and reduced-motion behavior.
-- Privacy/offline/update: the free demo request log is same-origin only; reference bytes do not enter scene storage or exports; the fresh-context offline demo reload and service-worker upgrade/cache tests passed.
-- Local production smoke: `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173/` passed in 630 ms with title, `lang=en`, one h1, main, image alts, named buttons, and zero console errors.
-- Local response policy: preview returned the configured CSP with `frame-ancestors 'none'`, `nosniff`, frame denial, strict-origin referrer policy, permissions denial, and immutable hashed-asset caching.
-- Lighthouse 12.8.2 mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1.81 s, TBT 0 ms, CLS 0.
+- `npm ci`: 61 packages installed; 0 vulnerabilities.
+- Unit/policy tests: **12/12 passed**.
+- Typecheck, lint, and production build: passed; `dist/index.html` is at the static root.
+- Browser integration: **66/66 passed in 1.5 minutes** across desktop and 390 px mobile. This includes keyboard V/F/S, arrow/Shift/Delete controls, pen/touch input, free and Studio limits, demo isolation, private image import/export, route focus, CSP image recovery, service-worker offline reload/update, and no third-party requests.
+- All 12 exact claim commands in `.factory/claims.json` were run individually from the production-preview test entry point; every command selected exactly one test and passed.
+- Playwright Axe integration passed with no serious/critical violations. A live 390 px Axe scan of `/`, `/demo`, `/privacy`, and `/terms` also found no serious/critical issues and no complementary-landmark violation.
+- Local `/opt/fleet/lib/verify-url.sh` passed for `/` (552 ms) and `/demo` (639 ms). Live verification passed for `/` (852 ms) and `/demo` (858 ms), with `lang=en`, one h1, main, image alt text, named buttons, and no console errors.
+- Local mobile Lighthouse 13.4.1: Performance **100**, Accessibility **100**, Best Practices **100**, SEO **100**; FCP 0.91 s, LCP 1.81 s, TBT 0 ms, CLS 0.
+- Billing live check passed without a purchase: invalid-token verdict and hosted Dodo checkout redirect were correct; rate limiting returned HTTP 429 with `Retry-After: 4`.
 
-## Budget and artifact evidence
+## Privacy, policy, and budgets
 
-- JavaScript: 33,949 bytes raw / 12,165 gzip.
-- CSS: 18,534 bytes raw / 5,210 gzip.
-- Hero WebP: 59,282 bytes. Social WebP: 83,106 bytes.
-- No font files or third-party scripts are shipped.
+- The request-log claim test confirms the complete free demo flow stays same-origin; image bytes are not saved in scenes or exports.
+- The live root and hashed JavaScript responses send HSTS, `nosniff`, frame denial, strict-origin referrer policy, the camera/microphone/geolocation denial, and a response-header CSP containing `frame-ancestors 'none'`. HTML revalidates at 30 seconds; hashed JavaScript is `max-age=31536000, immutable`.
+- Application JavaScript is 34,149 bytes raw / 12,125 gzip; CSS is 18,534 bytes raw / 5,196 gzip; the hero WebP is 59,282 bytes. No font files or third-party scripts ship.
+- `/`, `/demo`, `/privacy`, and `/terms` return 200. An unknown route returns the designed 404.
 
-Package/consumer testing is not applicable: this is a browser-only static product with no published package, server API, account system, or health endpoint.
-
-## Billing and live deployment
+## Deployment and live identity
 
 ```sh
 /opt/fleet/lib/deploy-static.sh guided-inking-overlay dist
 ```
 
-Azure Static Web Apps deployment ID: `f34261b4-803e-4ed0-84dc-fe6ec4620c2b`.
-
-- Live `/`, `/demo`, `/privacy`, and `/terms` return HTTP 200. An unknown route returns the designed HTTP 404.
-- Live `/opt/fleet/lib/verify-url.sh` passed for `/` (778 ms) and `/demo` (957 ms), with zero console errors, valid titles, `lang=en`, one h1, main landmarks, image alts, and named buttons.
-- A live 390 px `/demo` Axe scan found zero serious/critical findings and zero console errors.
-- `npm run check:billing-live -- --rate-limit` passed against `https://api.sociobot.in`: an invalid token received the JSON invalid verdict with production-origin CORS and `Cache-Control: no-store`; checkout returned the hosted Dodo redirect; the single-client probe observed HTTP 429 with `Retry-After: 4` seconds.
-- Live headers include HSTS, `nosniff`, `X-Frame-Options: DENY`, strict-origin referrer policy, the documented permissions policy, a response-header CSP with `frame-ancestors 'none'`, and immutable cache policy on hashed JavaScript.
-
-Local and production artifact SHA-256 values match:
+- Azure Static Web Apps deployment ID: `9d0f9c6a-9682-471a-ad71-9fe65516b11f`.
+- The configured custom domain is ready and serves the same deployed bytes as `dist/`.
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `index.html` | `0b6bc17d30cc30cbe68703b26d3f91eec1bd661fe6fa61681c30daf73aa52246` |
-| `sw.js` | `8dbfaebd9cacc047d9a7e7e48c9841865f9f27c3dc36ff9f138ad06c93b14c1b` |
-| `site.webmanifest` | `502ab767ee602f1a1a956e871e3f9e0d6836284a637ada6a0816d13d61ae104b` |
-| `assets/index-KnEcKQwT.js` | `c71409c172b9bbd4ecbbd581e22d333b696b09d2b91caa20475eede970f70cc0` |
+| `index.html` | `35c87bbbbed7337d3a63b8d5e699178e6f02f009b410d40f854f6670946a23a0` |
+| `sw.js` | `5811ffb61b6a687e86353820b826b6c02e8eb0e8adaf2359c64872a7a8a41d31` |
+| `assets/index-DPyXe4t2.js` | `3883d45cc93a6f97832fca9d472dfe0b0654e081942035d103759cc0914dbfa6` |
 | `assets/index-D1_YcUUW.css` | `b1245bc961c2bf22fb31a5700776ce12ba88f803ff066a15925f147de818c8cb` |
+| `assets/hero-paper-diorama.webp` | `a583689bf711d51572f52938b224651d83623c7c5088711cc9c956688444c540` |
+| `assets/ink-guides-social.webp` | `9fff07a7d253e02b948e585767528eeb0b3a1d73c0bce5724d555bfc19a1a4b4` |
+
+Package/consumer testing is not applicable: this is a browser-only static product with no published package, backend, account system, or health endpoint.
 
 ## Known gaps and next steps
 
-None in the repaired scope. Run `npm run check:billing-live -- --rate-limit` during future release checks; it never purchases or validates a real customer license.
+None in the repaired scope. Future releases should retain the offline first-verification regression and run the documented billing probe; it never validates a real customer token or starts a purchase.
