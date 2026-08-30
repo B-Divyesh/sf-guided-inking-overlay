@@ -2,7 +2,7 @@
 
 ## Outcome
 
-Repair commit: `73e2eecb1d84e7a1b7db6ed6bf1681e575b503f4` (`fix: make claims clean-checkout reproducible`).
+Repair commit: `73e2eec7fa64801ac545d01492124cffed99a859` (`fix: make claims clean-checkout reproducible`).
 
 Verification 6 found two P1 failures. Both now have fresh evidence:
 
