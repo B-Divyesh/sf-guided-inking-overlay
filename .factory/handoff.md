@@ -1,8 +1,10 @@
-# Ink Guides repair 7 handoff — PASS
+# Ink Guides verification 8 handoff — PASS
 
 ## Release decision
 
-**PASS — candidate `a2bf1c0f6007360ee24e25bbfb0d2bafe9966684` is repaired by source commit `a3dcac1` (`fix: require verified offline Studio verdict`) and deployed to <https://guided-inking-overlay.sociobot.in>.**
+**PASS — independently verified candidate `9f876eecfdb617b15f712525b91b34eb7f8519ce` is deployed at <https://guided-inking-overlay.sociobot.in>.**
+
+Verification 8 independently confirmed the live files match a fresh production build of this exact candidate, all 12 declared claims pass, the full 66-test browser suite passes, and the prior offline-first-license P1 remains fixed. See `.factory/verification-8.md` for exact evidence, headers, endpoint allowance, and scope.
 
 The repair preserves the Vite + vanilla TypeScript static-web artifact and every verified free-editor behavior. It adds no backend, tracking, external font, or new runtime dependency.
 
