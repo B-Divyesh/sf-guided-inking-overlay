@@ -12,7 +12,9 @@ type GuideState = {
 type Scene = { id: string; name: string; updatedAt: string; state: GuideState };
 
 const SLUG = 'guided-inking-overlay';
-const STORAGE_KEY = 'ink-guides:scenes:v1';
+const APP_VERSION = '1.0.1';
+const REAL_STORAGE_KEY = 'ink-guides:scenes:v1';
+const DEMO_STORAGE_KEY = 'demo:ink-guides:scenes:v1';
 const LICENSE_KEY = `sb_license:${SLUG}`;
 const VERDICT_KEY = `sb_license_verdict:${SLUG}`;
 const BILLING_BASE = import.meta.env.VITE_BILLING_API_BASE || 'https://api.sociobot.in';
@@ -25,11 +27,40 @@ const defaultState = (): GuideState => ({
   style: { opacity: 78, width: 2 },
 });
 
-let state = defaultState();
+const sampleState = (): GuideState => ({
+  fan: { visible: true, origin: { x: 915, y: 230 }, density: 13, rotation: 108, spread: 128 },
+  splines: [
+    { id: 'sample-platform-curve', points: [{ x: 120, y: 590 }, { x: 340, y: 430 }, { x: 610, y: 455 }, { x: 880, y: 610 }, { x: 1090, y: 560 }] },
+  ],
+  rails: { count: 7, gap: 22 },
+  style: { opacity: 82, width: 2.5 },
+});
+
+const sampleScenes = (): Scene[] => [
+  { id: 'demo-rainy-station', name: 'Rainy station panel', updatedAt: '2026-08-27T12:00:00.000Z', state: sampleState() },
+  {
+    id: 'demo-market-awning',
+    name: 'Market awning curve',
+    updatedAt: '2026-08-26T12:00:00.000Z',
+    state: {
+      fan: { visible: true, origin: { x: 245, y: 185 }, density: 9, rotation: 68, spread: 116 },
+      splines: [{ id: 'sample-awning-curve', points: [{ x: 110, y: 500 }, { x: 380, y: 330 }, { x: 720, y: 350 }, { x: 1080, y: 520 }] }],
+      rails: { count: 5, gap: 28 },
+      style: { opacity: 76, width: 2 },
+    },
+  },
+];
+
+function isDemoLocation(): boolean {
+  return location.pathname.replace(/\/$/, '') === '/demo' || new URLSearchParams(location.search).get('demo') === '1';
+}
+
+let demoMode = isDemoLocation();
+let state = demoMode ? sampleState() : defaultState();
 let tool: Tool = 'select';
 let scenes: Scene[] = readScenes();
-let selectedSpline: string | null = null;
-let selectedPoint = -1;
+let selectedSpline: string | null = demoMode ? state.splines[0]?.id || null : null;
+let selectedPoint = demoMode ? 0 : -1;
 let drawingPoints: Point[] = [];
 let dragMode: 'fan' | 'point' | 'draw' | null = null;
 let undoStack: GuideState[] = [];
@@ -54,33 +85,33 @@ const icon = (name: 'mark' | 'cursor' | 'fan' | 'curve' | 'upload' | 'save' | 'e
 
 function legalPage(kind: 'privacy' | 'terms'): string {
   const privacy = kind === 'privacy';
-  return `<header class="topbar"><a class="brand" href="/" data-route>${icon('mark')}<span>Ink Guides</span></a><a class="paper-link" href="/">Back to studio</a></header>
+  return `<header class="topbar"><a class="brand" href="/" data-route>${icon('mark')}<span>Ink Guides</span></a><nav class="top-actions" aria-label="Main"><a class="quiet-link" href="/demo" data-route>Demo</a><a class="paper-link" href="/" data-route>Back to studio</a></nav></header>
   <main id="main" class="legal paper-sheet">
-    <p class="eyebrow">The small print, in plain ink</p>
-    <h1>${privacy ? 'Privacy' : 'Terms'}</h1>
-    <p class="lede">${privacy ? 'Your sketches stay at your desk.' : 'A compact, honest license for a compact artist tool.'}</p>
-    ${privacy ? `<h2>What stays local</h2><p>Reference images are decoded only in your browser. They are never uploaded by Ink Guides and are not included in saved scenes or guide exports. Guide scenes, preferences, and an optional purchase license are stored in your browser’s local storage.</p>
-      <h2>Network requests</h2><p>The app makes no analytics or advertising requests. When you enter or receive a license, it contacts the Sociobot billing API to verify that license, at most once per day. The billing service receives the token and standard connection data such as IP address. Checkout is hosted by Sociobot/Dodo, the merchant of record, under their own privacy terms.</p>
-      <h2>Your control</h2><p>Delete scenes from the scene shelf. Use “Remove license from this device” in the unlock panel to clear purchase data. Clearing site data removes all Ink Guides local data.</p>` : `<h2>Using the app</h2><p>You may use Ink Guides and its exported geometry for personal or commercial artwork. Do not misuse the service, interfere with its operation, or claim the app itself as your own.</p>
-      <h2>Free and Studio unlock</h2><p>The free workspace includes guide creation and SVG/PNG export. The optional Studio unlock is a one-time purchase that adds up to 20 saved scenes and 2× PNG export. Sociobot/Dodo is the merchant of record and handles checkout and refunds. A refund revokes the associated license.</p>
-      <h2>Warranty</h2><p>The software is provided “as is,” without warranty. You remain responsible for saving your work and checking exports before relying on them. Nothing here limits rights that cannot legally be limited.</p>`}
+    <p class="eyebrow">Ink Guides policies</p>
+    <h1 tabindex="-1">${privacy ? 'Privacy' : 'Terms'}</h1>
+    <p class="lede">${privacy ? 'Your reference images stay on your device.' : 'These terms cover the free editor and Studio purchase.'}</p>
+    ${privacy ? `<h2>What stays local</h2><p>Reference images are decoded only in your browser. Ink Guides does not upload them or include them in saved scenes or exports. Guide scenes and optional license data use your browser’s local storage.</p>
+      <h2>Network requests</h2><p>The app makes no analytics or advertising requests. License verification contacts the Sociobot billing API at most once per day. The service receives the token and standard connection data, including your IP address. Sociobot/Dodo hosts checkout as the merchant of record.</p>
+      <h2>Your control</h2><p>Delete scenes from the scene shelf. Remove purchase data from the Studio panel. Clearing site data removes all local Ink Guides data.</p>` : `<h2>Using the app</h2><p>You may use exported geometry in personal or commercial artwork. Do not interfere with the app or claim the app as your own.</p>
+      <h2>Free and Studio plans</h2><p>The free editor includes guide creation, three scenes, SVG export, and 1200 × 800 PNG export. Studio costs $9 once. It adds 20 scenes and 2400 × 1600 PNG export. Sociobot/Dodo handles checkout and refunds as the merchant of record. A refund revokes its license.</p>
+      <h2>Warranty</h2><p>The software is provided “as is,” without warranty. Save your work and check exports before relying on them. These terms do not limit rights that the law protects.</p>`}
     <p class="legal-date">Effective 27 August 2026 · <a href="mailto:hello@sociobot.in">hello@sociobot.in</a></p>
   </main>${footer()}`;
 }
 
 function footer(): string {
-  return `<footer><p>Artwork stays local. <span aria-hidden="true">✦</span> Original generated paper-diorama imagery.</p><nav aria-label="Legal"><a href="/privacy" data-route>Privacy</a><a href="/terms" data-route>Terms</a><a href="https://github.com/B-Divyesh/sf-guided-inking-overlay" rel="noreferrer">Source</a></nav></footer>`;
+  return `<footer><p>Draw guide layers without uploading artwork. <span aria-hidden="true">✦</span> Original generated imagery. <span class="build-id">Version ${APP_VERSION}</span></p><nav aria-label="Footer"><a href="/demo" data-route>Demo</a><a href="/privacy" data-route>Privacy</a><a href="/terms" data-route>Terms</a><a href="https://github.com/B-Divyesh/sf-guided-inking-overlay" rel="noreferrer">Source</a></nav></footer>`;
 }
 
 function studioPage(): string {
   return `<header class="topbar">
-    <a class="brand" href="/" aria-label="Ink Guides home">${icon('mark')}<span>Ink Guides</span></a>
-    <div class="top-actions"><span class="connection" id="connection"><span></span> Works offline</span><button class="quiet-button" id="open-help">How it works</button><button class="unlock-button" id="open-license">${icon('lock')}<span id="unlock-label">Unlock Studio</span></button></div>
+    <a class="brand" href="/" data-route aria-label="Ink Guides home">${icon('mark')}<span>Ink Guides</span></a>
+    <nav class="top-actions" aria-label="Main"><span class="connection" id="connection"><span></span> Works offline</span><a class="quiet-link" href="/demo" data-route>Demo</a><button class="quiet-button" id="open-help">How it works</button><button class="unlock-button" id="open-license">${icon('lock')}<span id="unlock-label">Studio</span></button></nav>
   </header>
+  ${demoMode ? `<aside class="demo-banner" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved</strong><span>Try the prepared station and awning guides.</span><div><button class="secondary" id="reset-demo">Reset demo</button><a class="primary" href="/" data-route data-leave-demo>Start for real</a></div></aside>` : ''}
   <main id="main" class="studio">
     <section class="intro" aria-labelledby="page-title">
-      <div><p class="eyebrow">A portable drafting instrument</p><h1 id="page-title">Lay down the line.<br><em>Keep the flow.</em></h1></div>
-      <p>Build rotated perspective fans and repeatable curved rails over any reference—then take clean guide layers back to your art app.</p>
+      <div class="intro-copy"><p class="eyebrow">Guides for comic and concept artists</p><h1 id="page-title" tabindex="-1">Draw perspective and curved inking guides</h1><p class="intro-lede">Build reusable guide layers over a private reference, then export them to your art app.</p>${demoMode ? '' : '<div class="intro-action"><a class="primary" href="/demo" data-route>Try it with sample data</a><span>Loads two prepared guide scenes in a separate demo.</span></div>'}<ul class="hero-facts"><li>Works offline after your first visit.</li><li>References stay on this device.</li><li>Free editor included. Studio costs $9 once.</li></ul></div>
     </section>
     <section class="workbench" aria-label="Guide editor">
       <aside class="controls paper-panel" aria-label="Guide controls">
@@ -113,9 +144,9 @@ function studioPage(): string {
         </div>
         <div class="canvas-shell" id="canvas-shell">
           <canvas id="guide-canvas" width="1200" height="800" tabindex="0" aria-label="Guide canvas. Drag the coral vanishing point or draw a spline. Arrow keys move a selected point."></canvas>
-          <div class="canvas-welcome" id="canvas-welcome">
+          <div class="canvas-welcome" id="canvas-welcome"${demoMode ? ' hidden' : ''}>
             <img src="/assets/hero-paper-diorama.webp" width="960" height="640" alt="Paper-cut drafting desk with coral perspective threads and cyan curved rails" fetchpriority="high" decoding="async" />
-            <div><p class="eyebrow">Start on tracing paper</p><h2>Bring a sketch, or start clear.</h2><p>Your reference never leaves this browser.</p><div><button id="welcome-reference" class="primary">Choose reference</button><button id="welcome-clear" class="secondary">Start transparent</button></div></div>
+            <div><p class="eyebrow">Choose your canvas</p><h2>Use a reference or start blank.</h2><p>Ink Guides does not upload your reference.</p><div><button id="welcome-reference" class="primary">Choose reference</button><button id="welcome-clear" class="secondary">Start transparent</button></div></div>
           </div>
           <p class="canvas-hint" id="canvas-hint">Drag the coral pin to aim · press S to draw a curve</p>
         </div>
@@ -123,21 +154,21 @@ function studioPage(): string {
       </div>
     </section>
     <section class="lower-bench">
-      <div class="scene-section paper-panel"><div class="section-title"><div><p class="step">02 / reuse</p><h2>Scene shelf</h2><p>Save geometry locally. References are never stored.</p></div><span class="scene-count" id="scene-count">${scenes.length} / 3</span></div>
+      <div class="scene-section paper-panel"><div class="section-title"><div><p class="step">02 / save</p><h2>Saved scenes</h2><p>Scenes store guide geometry without your reference.</p></div><span class="scene-count" id="scene-count">${scenes.length} / 3</span></div>
         <div class="save-row"><label for="scene-name">Scene name</label><div><input id="scene-name" type="text" maxlength="42" autocomplete="off" placeholder="Alley, low angle…"><button id="save-scene" class="primary">${icon('save')} Save scene</button></div></div>
         <div class="scene-list" id="scene-list"></div>
       </div>
-      <div class="export-section paper-panel"><div class="section-title"><div><p class="step">03 / carry</p><h2>Clean guide layer</h2><p>Exports contain guide geometry only—never your reference.</p></div>${icon('export')}</div>
+      <div class="export-section paper-panel"><div class="section-title"><div><p class="step">03 / export</p><h2>Export guide layers</h2><p>SVG and PNG exports exclude your reference.</p></div>${icon('export')}</div>
         <div class="export-options"><button id="export-svg" class="primary big">Export SVG <small>Vector · free</small></button><button id="export-png" class="secondary big">Export PNG <small id="png-label">1200 × 800 · free</small></button></div>
         <p class="export-note"><span aria-hidden="true">✓</span> Transparent background · artwork-safe</p>
       </div>
     </section>
-    <section class="studio-offer" aria-labelledby="studio-title"><div><p class="eyebrow">One tool, not another subscription</p><h2 id="studio-title">Keep the bigger scene shelf.</h2><p>Ink Guides Studio adds 20 local scenes and crisp 2× PNGs. Core drawing and vector export stay free.</p></div><div class="price"><strong>$9</strong><span>one time</span><button class="primary" id="offer-unlock">Unlock Studio</button></div></section>
+    <section class="studio-offer" aria-labelledby="studio-title"><div><p class="eyebrow">Studio plan</p><h2 id="studio-title">Save 20 scenes and export larger PNGs.</h2><p>Studio adds 20 local scenes and 2400 × 1600 PNG export. Drawing and SVG export stay free.</p></div><div class="price"><strong>$9</strong><span>one time</span><button class="primary" id="offer-unlock">Buy Studio once</button></div></section>
   </main>
   ${footer()}
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <dialog id="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close help">×</button><p class="eyebrow">Three gestures</p><h2>Ink without fighting the ruler.</h2><ol><li><strong>Aim.</strong> Choose Aim fan and drag the coral pin. Tune density, rotation, and spread.</li><li><strong>Flow.</strong> Choose Draw spline, then draw one curve with mouse, pen, or touch. Ink Guides repeats it in parallel.</li><li><strong>Carry.</strong> Save the scene locally, or export transparent SVG/PNG geometry to your art app.</li></ol><p class="key-help">Keyboard: V select · F fan · S spline · arrow keys nudge · Shift + arrows move 10px · Delete removes a selected spline.</p></form></dialog>
-  <dialog id="license-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close unlock panel">×</button><p class="eyebrow">Ink Guides Studio</p><h2>More room, once.</h2><p class="license-copy">$9 one-time purchase. Unlock 20 saved scenes and 2× PNG export on this device. SVG export and accessibility remain free.</p><a class="primary buy-link" href="${BILLING_BASE}/api/v1/products/${SLUG}/checkout">Buy securely — $9</a><p class="merchant">Checkout and refunds are handled by Sociobot/Dodo, merchant of record.</p><hr><label for="license-token">Have a license? Paste it here</label><input id="license-token" type="text" autocomplete="off" spellcheck="false"><button value="cancel" type="button" class="secondary full" id="restore-license">Verify & restore purchase</button><button value="cancel" type="button" class="text-button" id="remove-license" hidden>Remove license from this device</button><p id="license-status" class="form-status" role="status"></p><p class="legal-links"><a href="/privacy" data-route>Privacy</a> · <a href="/terms" data-route>Terms</a></p></form></dialog>`;
+  <dialog id="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close help">×</button><p class="eyebrow">Three steps</p><h2>Create and export a guide layer.</h2><ol><li><strong>Aim.</strong> Choose Aim fan and drag the coral pin. Adjust density, rotation, and spread.</li><li><strong>Draw.</strong> Choose Draw spline, then draw one curve on the canvas. Ink Guides repeats it in parallel.</li><li><strong>Export.</strong> Save the scene or export transparent SVG and PNG geometry.</li></ol><p class="key-help">Keyboard: V selects. F aims the fan. S draws a spline. Arrow keys move points. Shift moves 10 pixels. Delete removes a spline.</p></form></dialog>
+  <dialog id="license-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close Studio panel">×</button><p class="eyebrow">Ink Guides Studio</p><h2>Buy Studio once.</h2><p class="license-copy">Studio costs $9 once. It adds 20 saved scenes and 2400 × 1600 PNG export. SVG export and accessibility remain free.</p><a class="primary buy-link" href="${BILLING_BASE}/api/v1/products/${SLUG}/checkout">Buy Studio — $9</a><p class="merchant">Sociobot/Dodo handles checkout and refunds as the merchant of record.</p><hr><label for="license-token">Have a license? Paste it here</label><input id="license-token" type="text" autocomplete="off" spellcheck="false"><button value="cancel" type="button" class="secondary full" id="restore-license">Verify and restore purchase</button><button value="cancel" type="button" class="text-button" id="remove-license" hidden>Remove license from this device</button><p id="license-status" class="form-status" role="status"></p><p class="legal-links"><a href="/privacy" data-route>Privacy</a> · <a href="/terms" data-route>Terms</a></p></form></dialog>`;
 }
 
 function rangeControl(id: string, label: string, min: number, max: number, step: number, value: number, suffix = ''): string {
@@ -146,32 +177,89 @@ function rangeControl(id: string, label: string, min: number, max: number, step:
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 
-function mount(): void {
+function setPageMetadata(route: string): void {
+  const metadata = route === '/privacy'
+    ? { title: 'Privacy — Ink Guides', description: 'How Ink Guides keeps references and guide scenes local.', canonical: '/privacy' }
+    : route === '/terms'
+      ? { title: 'Terms — Ink Guides', description: 'Terms for the Ink Guides free editor and Studio purchase.', canonical: '/terms' }
+      : route === '/demo' || demoMode
+        ? { title: 'Demo — Ink Guides', description: 'Try Ink Guides with two prepared perspective and spline guide scenes.', canonical: '/demo' }
+        : route === '/'
+          ? { title: 'Ink Guides — Draw perspective and spline guides', description: 'Draw reusable perspective fans and curved rails over private references, then export clean SVG and PNG guide layers.', canonical: '/' }
+          : { title: 'Page not found — Ink Guides', description: 'This Ink Guides page does not exist.', canonical: route };
+  const absolute = (path: string) => new URL(path, 'https://guided-inking-overlay.sociobot.in').href;
+  document.title = metadata.title;
+  document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', metadata.description);
+  document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute('href', absolute(metadata.canonical));
+  document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute('content', metadata.title);
+  document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute('content', metadata.description);
+  document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute('content', absolute(metadata.canonical));
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute('content', metadata.title);
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute('content', metadata.description);
+}
+
+function notFoundPage(): string {
+  return `<header class="topbar"><a class="brand" href="/" data-route>${icon('mark')}<span>Ink Guides</span></a></header><main id="main" class="legal paper-sheet not-found"><p class="eyebrow">404 error</p><h1 tabindex="-1">This page does not exist</h1><p class="lede">Return to the guide editor or open the sample demo.</p><div class="not-found-actions"><a class="primary" href="/" data-route>Open the editor</a><a class="secondary" href="/demo" data-route>Try the demo</a></div></main>${footer()}`;
+}
+
+function finishRouteChange(focusHeading: boolean): void {
+  if (!focusHeading) return;
+  requestAnimationFrame(() => {
+    const heading = document.querySelector<HTMLElement>('h1');
+    heading?.focus({ preventScroll: true });
+    const announcer = document.getElementById('route-announcer');
+    if (announcer && heading) announcer.textContent = `${heading.textContent?.trim() || document.title} page loaded`;
+  });
+}
+
+function mount(focusHeading = false): void {
   const route = location.pathname.replace(/\/$/, '') || '/';
+  const nextDemoMode = isDemoLocation();
+  if (nextDemoMode !== demoMode) {
+    if (demoMode) localStorage.removeItem(DEMO_STORAGE_KEY);
+    releaseReference();
+    demoMode = nextDemoMode;
+    state = demoMode ? sampleState() : defaultState();
+    scenes = readScenes();
+    undoStack = [];
+    redoStack = [];
+    selectedSpline = demoMode ? state.splines[0]?.id || null : null;
+    selectedPoint = demoMode ? 0 : -1;
+  }
+  setPageMetadata(route);
   if (route === '/privacy' || route === '/terms') {
-    document.title = `${route === '/privacy' ? 'Privacy' : 'Terms'} — Ink Guides`;
     app.innerHTML = legalPage(route.slice(1) as 'privacy' | 'terms');
     bindRoutes();
+    finishRouteChange(focusHeading);
     return;
   }
-  document.title = 'Ink Guides — perspective fans & spline rails';
+  if (route !== '/' && route !== '/demo') {
+    app.innerHTML = notFoundPage();
+    bindRoutes();
+    finishRouteChange(focusHeading);
+    return;
+  }
   app.innerHTML = studioPage();
   bindRoutes();
   bindStudio();
-  void initializeLicense();
+  if (demoMode) applyUnlock(false);
+  else void initializeLicense();
+  finishRouteChange(focusHeading);
 }
 
 function bindRoutes(): void {
   document.querySelectorAll<HTMLAnchorElement>('[data-route]').forEach((link) => link.addEventListener('click', (event) => {
     if (link.origin !== location.origin) return;
     event.preventDefault();
-    history.pushState({}, '', link.pathname);
-    mount();
+    const target = `${link.pathname}${link.search}${link.hash}`;
+    if (demoMode && link.pathname !== '/demo') localStorage.removeItem(DEMO_STORAGE_KEY);
+    history.pushState({}, '', target);
+    mount(true);
     scrollTo(0, 0);
   }));
 }
 
-window.addEventListener('popstate', mount);
+window.addEventListener('popstate', () => mount(true));
 
 function cloneState(value: GuideState): GuideState {
   return structuredClone(value);
@@ -179,16 +267,18 @@ function cloneState(value: GuideState): GuideState {
 
 function readScenes(): Scene[] {
   try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') as Scene[];
+    const raw = localStorage.getItem(demoMode ? DEMO_STORAGE_KEY : REAL_STORAGE_KEY);
+    if (raw === null) return demoMode ? sampleScenes() : [];
+    const stored = JSON.parse(raw) as Scene[];
     return Array.isArray(stored) ? stored.filter((scene) => scene?.state?.fan && Array.isArray(scene.state.splines)) : [];
   } catch {
-    return [];
+    return demoMode ? sampleScenes() : [];
   }
 }
 
 function persistScenes(): boolean {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(scenes));
+    localStorage.setItem(demoMode ? DEMO_STORAGE_KEY : REAL_STORAGE_KEY, JSON.stringify(scenes));
     return true;
   } catch {
     notify('Scenes could not be saved. Your browser storage may be full.');
@@ -237,6 +327,7 @@ function bindStudio(): void {
   byId('offer-unlock').addEventListener('click', openLicense);
   byId('restore-license').addEventListener('click', restoreLicense);
   byId('remove-license').addEventListener('click', removeLicense);
+  document.getElementById('reset-demo')?.addEventListener('click', resetDemo);
   document.removeEventListener('keydown', globalKeydown);
   document.addEventListener('keydown', globalKeydown);
   window.removeEventListener('online', updateConnection);
@@ -372,7 +463,7 @@ function canvasKeydown(event: KeyboardEvent): void {
 }
 
 function globalKeydown(event: KeyboardEvent): void {
-  if (location.pathname !== '/' || (event.target as HTMLElement).matches('input, textarea, select')) return;
+  if (!['/', '/demo'].includes(location.pathname) || (event.target as HTMLElement).matches('input, textarea, select')) return;
   if (event.key.toLowerCase() === 'v') setTool('select');
   if (event.key.toLowerCase() === 'f') setTool('fan');
   if (event.key.toLowerCase() === 's' && !(event.metaKey || event.ctrlKey)) setTool('spline');
@@ -485,6 +576,25 @@ function clearReference(): void {
   if (reference) URL.revokeObjectURL(reference.url); reference = null; byId('reference-control').hidden = true; byId('clear-reference').hidden = true; renderCanvas(); notify('Reference removed.');
 }
 
+function releaseReference(): void {
+  if (reference) URL.revokeObjectURL(reference.url);
+  reference = null;
+}
+
+function resetDemo(): void {
+  localStorage.removeItem(DEMO_STORAGE_KEY);
+  scenes = sampleScenes();
+  state = sampleState();
+  selectedSpline = null;
+  selectedPoint = -1;
+  undoStack = [];
+  redoStack = [];
+  refreshControls();
+  renderScenes();
+  refresh();
+  notify('Demo reset to the two sample scenes.');
+}
+
 function saveScene(): void {
   const input = byId<HTMLInputElement>('scene-name'); const name = input.value.trim();
   if (!name) { input.setCustomValidity('Name this scene so you can find it later.'); input.reportValidity(); input.addEventListener('input', () => input.setCustomValidity(''), { once: true }); return; }
@@ -572,6 +682,7 @@ async function initializeLicense(): Promise<void> {
 }
 
 async function restoreLicense(): Promise<void> {
+  if (demoMode) { byId('license-status').textContent = 'Start for real before restoring a license.'; return; }
   const input = byId<HTMLInputElement>('license-token'); const token = input.value.trim();
   if (!token) { input.setCustomValidity('Paste the license token from your receipt.'); input.reportValidity(); input.addEventListener('input', () => input.setCustomValidity(''), { once: true }); return; }
   localStorage.setItem(LICENSE_KEY, token); byId('license-status').textContent = 'Checking your license…'; await verifyLicense(token, true);
@@ -594,9 +705,9 @@ async function verifyLicense(token: string, announce: boolean): Promise<void> {
 
 function applyUnlock(value: boolean): void {
   unlocked = value;
-  const label = document.getElementById('unlock-label'); if (label) label.textContent = value ? 'Studio unlocked' : 'Unlock Studio';
+  const label = document.getElementById('unlock-label'); if (label) label.textContent = value ? 'Studio unlocked' : 'Studio';
   const png = document.getElementById('png-label'); if (png) png.textContent = value ? '2400 × 1600 · Studio' : '1200 × 800 · free';
-  const remove = document.getElementById('remove-license'); if (remove) remove.hidden = !localStorage.getItem(LICENSE_KEY);
+  const remove = document.getElementById('remove-license'); if (remove) remove.hidden = demoMode || !localStorage.getItem(LICENSE_KEY);
   renderScenes();
 }
 

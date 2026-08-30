@@ -100,7 +100,31 @@ test('a strict production CSP never routes local blob image decoding through the
 test('deployment policy keeps assets immutable and prevents framing', async () => {
   const config = JSON.parse(await readFile(resolve(import.meta.dirname, '../public/staticwebapp.config.json'), 'utf8'));
   expect(config.routes).toContainEqual({ route: '/assets/*', headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } });
+  expect(config.navigationFallback).toBeUndefined();
+  expect(config.routes).toEqual(expect.arrayContaining([
+    { route: '/demo', rewrite: '/index.html' },
+    { route: '/privacy', rewrite: '/index.html' },
+    { route: '/terms', rewrite: '/index.html' },
+  ]));
+  expect(config.responseOverrides['404']).toEqual({ rewrite: '/404.html' });
   expect(config.globalHeaders['Content-Security-Policy']).toContain("frame-ancestors 'none'");
   expect(config.globalHeaders['Content-Security-Policy']).toContain("connect-src 'self' blob:");
   expect(config.globalHeaders['X-Frame-Options']).toBe('DENY');
+});
+
+test('sharing, install, and 404 metadata are complete', async () => {
+  const index = await readFile(resolve(import.meta.dirname, '../index.html'), 'utf8');
+  const notFound = await readFile(resolve(import.meta.dirname, '../public/404.html'), 'utf8');
+  const manifest = JSON.parse(await readFile(resolve(import.meta.dirname, '../public/site.webmanifest'), 'utf8'));
+  expect(index).toContain('rel="canonical"');
+  expect(index).toContain('property="og:image"');
+  expect(index).toContain('name="twitter:card"');
+  expect(index).toContain('rel="apple-touch-icon"');
+  expect(manifest.icons).toEqual(expect.arrayContaining([
+    expect.objectContaining({ src: '/icon-192.png', sizes: '192x192' }),
+    expect.objectContaining({ src: '/icon-512.png', sizes: '512x512' }),
+  ]));
+  expect(notFound).toContain('<title>Page not found — Ink Guides</title>');
+  expect(notFound.match(/<h1/g)).toHaveLength(1);
+  expect(notFound).toContain('href="/"');
 });

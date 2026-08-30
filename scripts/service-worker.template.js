@@ -1,5 +1,5 @@
 const CACHE = 'ink-guides-__CACHE_VERSION__';
-const SHELL = ['/', '/index.html', '/site.webmanifest'];
+const SHELL = ['/', '/index.html', '/site.webmanifest', '/favicon.svg', '/icon-192.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
@@ -25,8 +25,10 @@ self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE).then((cache) => cache.put('/index.html', copy));
+        if (response.ok && ['/', '/demo', '/privacy', '/terms'].includes(url.pathname)) {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put('/index.html', copy));
+        }
         return response;
       }).catch(() => caches.match('/index.html').then((cached) => cached || caches.match('/'))),
     );

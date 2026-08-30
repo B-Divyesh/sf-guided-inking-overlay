@@ -1,10 +1,13 @@
 {
   "name": "Ink Guides",
   "short_name": "Ink Guides",
-  "description": "Portable perspective and spline guide layers for artists.",
+  "description": "Draw perspective fans and curved rails, then export clean guide layers.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#171a29",
   "theme_color": "#171a29",
-  "icons": []
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
 }

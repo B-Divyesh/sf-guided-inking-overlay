@@ -73,6 +73,90 @@ test('legal pages have one heading and mobile layout does not overflow', async (
   await expect(page).toHaveURL('/');
 });
 
+test('first screen names the job, artists, next step, and sample demo', async ({ page }) => {
+  await expect(page.getByRole('heading', { level: 1, name: 'Draw perspective and curved inking guides' })).toBeVisible();
+  await expect(page.getByText('Guides for comic and concept artists')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Try it with sample data' })).toBeVisible();
+  await expect(page.getByText('Loads two prepared guide scenes in a separate demo.')).toBeVisible();
+  await page.getByRole('link', { name: 'Try it with sample data' }).click();
+  await expect(page).toHaveURL('/demo');
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+  await expect(page.locator('#canvas-summary')).toHaveText('13 fan lines · 1 spline');
+});
+
+test('SPA route changes focus and announce the new page', async ({ page }) => {
+  await page.getByRole('link', { name: 'Privacy' }).click();
+  const privacyHeading = page.getByRole('heading', { level: 1, name: 'Privacy' });
+  await expect(privacyHeading).toBeFocused();
+  await expect(page.locator('#route-announcer')).toHaveText('Privacy page loaded');
+  await page.goBack();
+  const studioHeading = page.getByRole('heading', { level: 1, name: 'Draw perspective and curved inking guides' });
+  await expect(studioHeading).toBeFocused();
+  await expect(page.locator('#route-announcer')).toHaveText('Draw perspective and curved inking guides page loaded');
+});
+
+test('unknown SPA paths show the designed 404 and a way home', async ({ page }) => {
+  await page.goto('/not-a-real-route');
+  await expect(page).toHaveTitle('Page not found — Ink Guides');
+  await expect(page.getByRole('heading', { level: 1, name: 'This page does not exist' })).toHaveCount(1);
+  await page.getByRole('link', { name: 'Open the editor' }).click();
+  await expect(page).toHaveURL('/');
+});
+
+test('route metadata and install icons are complete', async ({ page, request }) => {
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://guided-inking-overlay.sociobot.in/');
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /ink-guides-social\.webp$/);
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+  await page.goto('/privacy');
+  await expect(page).toHaveTitle('Privacy — Ink Guides');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://guided-inking-overlay.sociobot.in/privacy');
+  const manifest = await (await request.get('/site.webmanifest')).json();
+  expect(manifest.icons).toHaveLength(2);
+});
+
+test('demo, Studio dialog, and privacy route have no serious accessibility issues', async ({ page }) => {
+  await page.goto('/demo');
+  for (const scan of [
+    async () => new AxeBuilder({ page }).analyze(),
+    async () => {
+      await page.getByRole('button', { name: 'Studio', exact: true }).click();
+      return new AxeBuilder({ page }).include('#license-dialog').analyze();
+    },
+    async () => {
+      await page.getByRole('button', { name: 'Close Studio panel' }).click();
+      await page.goto('/privacy');
+      return new AxeBuilder({ page }).analyze();
+    },
+  ]) {
+    const results = await scan();
+    expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
+  }
+});
+
+test('pen-style and touch pointers draw splines at 390px', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/demo');
+  await page.getByRole('button', { name: /Draw spline/ }).click();
+  const box = await page.getByLabel(/Guide canvas/).boundingBox();
+  expect(box).not.toBeNull();
+  const session = await page.context().newCDPSession(page);
+  const points = [
+    { x: box!.x + box!.width * .15, y: box!.y + box!.height * .72 },
+    { x: box!.x + box!.width * .43, y: box!.y + box!.height * .36 },
+    { x: box!.x + box!.width * .8, y: box!.y + box!.height * .61 },
+  ];
+  await session.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: points[0]!.x, y: points[0]!.y, button: 'left', buttons: 1, clickCount: 1, pointerType: 'pen' });
+  await session.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: points[1]!.x, y: points[1]!.y, button: 'left', buttons: 1, pointerType: 'pen' });
+  await session.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: points[2]!.x, y: points[2]!.y, button: 'left', buttons: 1, pointerType: 'pen' });
+  await session.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: points[2]!.x, y: points[2]!.y, button: 'left', buttons: 0, clickCount: 1, pointerType: 'pen' });
+  await expect(page.locator('#canvas-summary')).toContainText('2 splines');
+  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: points[0]!.x, y: points[0]!.y, id: 4 }] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: points[1]!.x, y: points[1]!.y, id: 4 }] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: points[2]!.x, y: points[2]!.y, id: 4 }] });
+  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect(page.locator('#canvas-summary')).toContainText('3 splines');
+});
+
 test('390px welcome actions meet the 44px touch-target requirement', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const name of ['Choose reference', 'Start transparent']) {

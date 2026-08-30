@@ -1,31 +1,41 @@
 # Ink Guides
 
-Ink Guides is a local-first browser drafting instrument for comic and concept artists. It creates reusable rotated perspective fans and parallel spline rails over a private reference image, then exports clean transparent guide geometry as SVG or PNG.
+Ink Guides draws reusable perspective fans and parallel curved rails for comic and concept artists. References stay local, and exports contain guide geometry only.
 
 Live product: <https://guided-inking-overlay.sociobot.in>
 
+One-click sample demo: <https://guided-inking-overlay.sociobot.in/demo>
+
 ## What it does
 
-- Aim a perspective fan by dragging its vanishing point; tune density, rotation, and spread.
-- Draw a spline with mouse, pen, or touch and repeat it as evenly spaced parallel rails.
-- Import a PNG, JPEG, WebP, or GIF reference locally. Images are decoded in the browser, never uploaded, never saved in scenes, and never included in exports.
+- Adjust a rotated perspective fan by density, angle, spread, and vanishing point.
+- Draw a spline directly and repeat it as evenly spaced parallel rails.
+- Import PNG, JPEG, WebP, and GIF references without saving or uploading them.
 - Save and reload named guide scenes in browser storage.
-- Export artwork-safe transparent SVG and PNG layers.
+- Export transparent SVG and PNG guide layers without the reference.
 - Work offline after the first successful visit.
-- Use the editor from keyboard: V/F/S select tools, arrows nudge a point, Shift + arrows nudge 10 px, and Delete removes a selected spline.
+- Use V, F, and S to select tools. Arrow keys move points. Shift moves 10 pixels. Delete removes a spline.
 
-The useful free tier includes guide creation, three local scenes, SVG export, and 1200×800 PNG export. The optional $9 one-time Studio license adds 20 local scenes and 2400×1600 PNG export through the Sociobot billing API.
+The free editor saves three scenes and exports SVG plus 1200 × 800 PNG files. Studio costs $9 once and adds 20 scenes plus 2400 × 1600 PNG files. Sociobot/Dodo handles checkout and refunds as the merchant of record.
+
+## Try the isolated demo
+
+Open `/demo` or choose “Try it with sample data” on the first screen. The demo loads two prepared comic-panel guide scenes.
+
+Demo edits use `demo:ink-guides:scenes:v1`. They never read or change the real `ink-guides:scenes:v1` workspace. “Reset demo” restores the samples. Leaving the demo discards its storage.
+
+See [`.factory/demo.md`](.factory/demo.md) for the sample and storage details. Every public product claim and its exact test command is listed in [`.factory/claims.json`](.factory/claims.json).
 
 ## Run locally
 
-Requires Node.js 20 or newer.
+Node.js 20 or newer is required.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-The development server prints its local URL. No API key or backend is needed for the editor.
+The editor needs no API key or product backend.
 
 ## Test and build
 
@@ -37,28 +47,30 @@ npm run build
 npm run test:e2e
 ```
 
-`npm run build` type-checks the app, creates a content-versioned service worker cache, and writes the static deployment to `dist/`, with `dist/index.html` at its root. End-to-end tests use pinned Playwright 1.58.2 and include desktop, 390px mobile, Axe accessibility, console, import, drawing, local persistence, routing, SVG export, keyboard, touch-target, and offline-shell checks.
+`npm run build` writes the static product to `dist/`. End-to-end tests use Playwright 1.58.2 on desktop and 390px mobile Chromium.
 
-If Playwright browsers are not already available:
+Run any claim from a clean state with its command in `.factory/claims.json`. For example:
+
+```sh
+npm run test:e2e -- --project=chromium --grep @claim:demo-sandbox
+```
+
+If Chromium is unavailable, install the pinned browser:
 
 ```sh
 npx playwright install chromium
 ```
 
-## Deployment and configuration
+## Deploy
 
-Deploy the contents of `dist/` to Azure Static Web Apps. `public/staticwebapp.config.json` supplies SPA navigation fallback, immutable asset caching, and security headers including CSP/frame protection.
+Deploy `dist/` to Azure Static Web Apps. `public/staticwebapp.config.json` defines the real app routes, 404 response, cache policy, and security headers.
 
-The production billing base defaults to `https://api.sociobot.in`. A staging build can use the factory’s pilot endpoint without changing source:
+Production billing uses `https://api.sociobot.in`. A staging build can use the pilot endpoint:
 
 ```sh
 VITE_BILLING_API_BASE=https://pilot-api.sociobot.in npm run build
 ```
 
-No product ID is embedded; checkout and verification are addressed by the product slug, `guided-inking-overlay`.
+The free editor loads no analytics, advertising, third-party scripts, or CDN fonts. License verification contacts Sociobot at most once per day. Read `/privacy` and `/terms` for details.
 
-## Privacy and design
-
-There are no analytics, third-party scripts, CDN fonts, or artwork uploads. Scenes and optional license data use `localStorage`; license verification runs against Sociobot at most once per day. See `/privacy` and `/terms` in the product.
-
-The product-specific paper-cut diorama visual system and generated-image provenance are documented in [`.factory/design.md`](.factory/design.md). The project is available under the MIT License.
+The paper-cut diorama design and original asset provenance are documented in [`.factory/design.md`](.factory/design.md). The project uses the MIT License.

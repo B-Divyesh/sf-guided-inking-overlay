@@ -58,3 +58,5 @@ Prompt sheet: overhead miniature paper-cut drafting diorama; empty warm paper dr
 - Date: 2026-08-27
 - License/provenance: original AI-generated asset commissioned for Ink Guides; source and exact prompt stored under `assets/src/`.
 - Delivery: responsive WebP, explicit dimensions, under 300 KB. Candidate is visually reviewed for text artifacts, brands, seams, and palette fit before use.
+- Social preview: a 1200 × 630 center crop of the same reviewed source, exported locally as WebP with no added text.
+- Install icons: PNG exports of the hand-authored coral guide mark on the midnight table color at 180, 192, and 512 pixels.

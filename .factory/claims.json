@@ -1,0 +1,86 @@
+[
+  {
+    "id": "guide-creation",
+    "claim": "Creates adjustable perspective fans and parallel curved rails.",
+    "where": "first screen, editor, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:guide-creation",
+    "sandbox": "fresh browser context at /demo; adjust fan density and draw a second spline; assert rendered summary"
+  },
+  {
+    "id": "reference-privacy",
+    "claim": "Imports PNG, JPEG, WebP, and GIF references without saving or uploading the image.",
+    "where": "reference picker, privacy page, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:reference-privacy",
+    "sandbox": "fresh /demo context; decode each format; save a scene; inspect demo storage and outgoing requests"
+  },
+  {
+    "id": "local-scenes",
+    "claim": "Saves and reloads named guide scenes in browser storage.",
+    "where": "scene shelf, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:local-scenes",
+    "sandbox": "fresh /demo context; save a named scene, reload, and assert UI and demo-namespace geometry"
+  },
+  {
+    "id": "geometry-exports",
+    "claim": "Exports transparent SVG and PNG guide layers without the reference image.",
+    "where": "export panel, privacy page, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:geometry-exports",
+    "sandbox": "demo geometry plus local reference; inspect SVG markup and PNG dimensions/transparency"
+  },
+  {
+    "id": "offline-reload",
+    "claim": "Works offline after the first successful visit.",
+    "where": "first screen, connection status, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:offline-reload",
+    "sandbox": "own fresh browser context; install worker online, set context offline, reload /demo"
+  },
+  {
+    "id": "keyboard-controls",
+    "claim": "V, F, and S select tools; arrows move a point; Shift moves 10 pixels; Delete removes a spline.",
+    "where": "help dialog, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:keyboard-controls",
+    "sandbox": "fresh demo; operate the focused canvas and selected sample spline with keyboard only"
+  },
+  {
+    "id": "free-tier",
+    "claim": "The free editor saves three scenes and exports 1200 × 800 PNG files plus SVG.",
+    "where": "first screen, scene shelf, export panel, terms, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:free-tier",
+    "sandbox": "fresh /demo context without a license; save to the boundary and inspect downloaded PNG"
+  },
+  {
+    "id": "studio-tier",
+    "claim": "A valid Studio license saves 20 scenes and exports 2400 × 1600 PNG files.",
+    "where": "Studio panel, terms, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:studio-tier",
+    "sandbox": "enter through /demo, start a real workspace, use a recorded valid response, and verify the paid boundary and PNG"
+  },
+  {
+    "id": "studio-price",
+    "claim": "Studio costs $9 as a one-time purchase through Sociobot/Dodo.",
+    "where": "first screen, Studio panel, terms, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:studio-price",
+    "sandbox": "fresh demo; assert exact price, purchase terms, merchant copy, and Sociobot checkout URL"
+  },
+  {
+    "id": "daily-license-verification",
+    "claim": "Ink Guides verifies a stored license at most once per day.",
+    "where": "privacy page, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:daily-license-verification",
+    "sandbox": "enter through /demo, start for real, then count recorded verification requests across two reloads"
+  },
+  {
+    "id": "demo-sandbox",
+    "claim": "The sample demo uses separate storage and discards demo changes when the user leaves.",
+    "where": "Try it with sample data action, demo banner, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:demo-sandbox",
+    "sandbox": "seed real storage; enter /demo in one click; write/reset demo data; leave and compare namespaces"
+  },
+  {
+    "id": "no-tracking",
+    "claim": "The free editor loads no analytics, advertising, third-party scripts, or CDN fonts.",
+    "where": "privacy page, README",
+    "test": "npm run test:e2e -- --project=chromium --grep @claim:no-tracking",
+    "sandbox": "fresh demo flow with a complete request log; assert every request is same-origin and every loaded script is same-origin"
+  }
+]
