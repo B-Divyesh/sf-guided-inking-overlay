@@ -2,7 +2,7 @@
 
 ## Outcome
 
-Repair implementation: `12902bff99bd6c5e566dd9b5febaa60a53e3b886`.
+Repair implementation: `12902bf84953376dc44fb59996e33b55be531419`.
 
 Every release-blocking finding in independent verification 5 is repaired without changing the static-web artifact or the paper-cut drafting identity. The production deployment is <https://guided-inking-overlay.sociobot.in>.
 
