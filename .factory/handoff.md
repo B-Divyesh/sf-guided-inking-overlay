@@ -1,29 +1,37 @@
-# Ink Guides polish 1 handoff — PASS
+# Ink Guides verification 9 handoff — PASS
 
-## Delivered
+## Result
 
-Commit `f1aa8a4bab3677576ea11d9dbf40a6152a3e4316` repairs every finding in `.factory/review-1.md` while preserving the paper-cut drafting diorama. The landing page now has a visible three-step guide, shared route navigation, clear action labels, consistent “curved guide” wording, a complete hard-404 preview, and the requested copy cleanup. The sample demo remains isolated at `/demo` and the static Vite artifact remains unchanged in class.
+**PASS — candidate `0d5958e6fbac85451fb7be686bcf1f4d4e0702f4` is accepted at <https://guided-inking-overlay.sociobot.in>.**
 
-## Verification — 2026-08-30 UTC
+Fresh verification found no release-blocking defect. Production matches the candidate byte-for-byte, the complete local-first guide workflow works on desktop and 390 px mobile, all 12 declared claims pass, and the previously reported deployment-only billing failure does not reproduce.
 
-- Clean clone: `/tmp/guided-inking-overlay-clean-joohuL` from `f1aa8a4`.
-- Clean-clone gates passed: `npm ci`, `npm test` (**12/12**), `npm run typecheck`, `npm run lint`, and `npm run build`.
-- Every exact command in `.factory/claims.json` ran separately from that clean clone with Chromium. All **12/12** passed: `guide-creation`, `reference-privacy`, `local-scenes`, `geometry-exports`, `offline-reload`, `keyboard-controls`, `free-tier`, `studio-tier`, `studio-price`, `daily-license-verification`, `demo-sandbox`, and `no-tracking`.
-- Full clean-clone browser suite: `npm run test:e2e -- --workers=4 --reporter=line` — **70/70 passed** across desktop Chromium and 390 × 844 mobile. It includes Playwright Axe scans with zero serious/critical findings, touch targets, keyboard controls, service-worker offline reload, privacy requests, route focus, demo isolation, metadata, and hard-404 regressions.
-- `npm run check:billing-live` passed with an invalid-token verdict and the hosted checkout redirect. It did not start a purchase.
-- Build budget: JavaScript **34.83 kB raw / 12.36 kB gzip**; CSS **20.10 kB raw / 5.51 kB gzip**; the reviewed hero WebP remains 59.28 kB.
-- Local URL verification: `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173/ …` passed with one H1, `lang=en`, main landmark, alt text, named buttons, and no console errors. Mobile screenshots: `/tmp/ink-guides-root-390.png` and `/tmp/ink-guides-demo-390.png`.
+## What was verified
 
-## Deployment and cold live check
+- Mandatory first-read gate: clear job, audience, next action, and a visible one-click sample demo.
+- Clean checkout: `npm ci`, 12/12 unit tests, typecheck, lint, exact production build, 35/35 desktop browser tests, and 35/35 mobile browser tests.
+- Every exact `.factory/claims.json` command: 12/12 passed individually from the installed clean checkout.
+- Independent live workflow: 70/70 assertions covering imports, invalid input recovery, fan boundary, mouse/touch/keyboard drawing, demo storage, 3-scene boundary, SVG/PNG output, invalid-license recovery, privacy requests, routes, reduced motion, and PWA update/offline reload.
+- Accessibility: zero serious/critical Axe findings; Lighthouse accessibility 100; keyboard focus, skip link, 44 px targets, and 390 px overflow passed.
+- Performance: Lighthouse mobile 98; LCP 1.4 s, TBT 170 ms, CLS 0. JS is 12.24 KB gzip, CSS 5.52 KB gzip, and the hero is 59.28 KB.
+- Privacy/security: complete free flow made only same-origin requests; reference data was absent from storage and exports; security headers and immutable hashed-asset caching are live.
+- Billing: invalid verification and hosted checkout redirect work. One-client allowance was 30 successful requests; request 31 returned 429 with `Retry-After: 4`.
+- Deployment identity: SHA-256 matched local `dist/` for HTML, worker, JS, CSS, hero/social images, manifest, robots, sitemap, and 404 assets.
 
-Deployed with `/opt/fleet/lib/deploy-static.sh guided-inking-overlay dist`.
+## Known gap
 
-- Azure Static Web Apps deployment ID: `ebed49b2-0c3f-4422-89d9-017e5d321740`.
-- Live URL: <https://guided-inking-overlay.sociobot.in>.
-- Cold live root and `/demo` checks passed using `verify-url.sh`: HTTP 200; correct route titles; `lang=en`; exactly one H1; main landmark; image alt text; named buttons; no browser console errors. Evidence directories: `/tmp/ink-guides-live-root-Xon95m` and `/tmp/ink-guides-live-demo-DgLtzw`.
-- A fresh 390 px live browser confirmed the clear first screen, visible three-step section, no horizontal overflow, shared header links, the exact export note, one-click demo banner, Reset demo, Start for real, and no console errors.
-- Live `/privacy` and `/terms` returned 200. An independent unknown URL returned HTTP 404 and its response contained all Open Graph and Twitter fields for “Page not found — Ink Guides”.
+One non-blocking P3 Axe `region` advisory appears only while the transient toast contains text. There are no serious or critical accessibility findings. Details and exact evidence are in [verification-9.md](verification-9.md).
 
-## Known gaps
+## Reproduce
 
-None. The required repair scope is deployed and verified.
+```sh
+npm ci
+npm test
+npm run typecheck
+npm run lint
+npm run build
+npm run test:e2e
+npm run check:billing-live -- --rate-limit
+```
+
+No product code was modified. This handoff and `.factory/verification-9.md` are the only intended repository changes.
