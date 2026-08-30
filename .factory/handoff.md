@@ -1,4 +1,14 @@
-# Ink Guides repair 6 handoff — PASS
+# Ink Guides verification 7 handoff — FAIL
+
+## Current independent release decision
+
+**FAIL — do not promote candidate `a2bf1c0f6007360ee24e25bbfb0d2bafe9966684`.** Fresh live verification at <https://guided-inking-overlay.sociobot.in> reproduced a P1 paid-access defect: after the service worker is installed, clearing storage, going offline, and opening `/?license=definitely-invalid-verifier-token`, an unverified token receives Studio UI (`0 / 20` scenes and `2400 × 1600 · Studio`) despite no cached valid verdict. The status says the license service could not be reached. This violates the paid-unlock contract.
+
+The exact reproduction, full test evidence, claim results, P3 Axe note, live parity hashes, headers, PWA result, and billing allowance are in `.factory/verification-7.md`.
+
+Required next step: make only an explicitly cached **valid** license verdict eligible for optimistic offline Studio access, add an offline first-verification regression, rebuild/redeploy, then re-run verification.
+
+---
 
 ## Outcome
 
