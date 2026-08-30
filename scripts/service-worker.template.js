@@ -16,7 +16,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
+  const url = new URL(event.request.url);
+  // Blob URLs are local image-decoding resources, not network requests. Routing
+  // one through the worker can make a strict connect-src policy report a CSP
+  // error while recovering from a corrupt reference image.
+  if (event.request.method !== 'GET' || !['http:', 'https:'].includes(url.protocol) || url.origin !== self.location.origin) return;
 
   if (event.request.mode === 'navigate') {
     event.respondWith(

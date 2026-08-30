@@ -84,9 +84,23 @@ test('the built worker cache version changes with the application shell', async 
   expect(version('<script src="old.js"></script>')).not.toBe(version('<script src="new.js"></script>'));
 });
 
+test('a strict production CSP never routes local blob image decoding through the worker', async () => {
+  const caches = new MemoryCaches();
+  const worker = await loadWorker('blob-regression', caches);
+  let responseHandled = false;
+
+  worker.listeners.get('fetch')!({
+    request: { method: 'GET', mode: 'no-cors', url: 'blob:https://ink-guides.test/corrupt-image' },
+    respondWith: () => { responseHandled = true; },
+  } as never);
+
+  expect(responseHandled).toBe(false);
+});
+
 test('deployment policy keeps assets immutable and prevents framing', async () => {
   const config = JSON.parse(await readFile(resolve(import.meta.dirname, '../public/staticwebapp.config.json'), 'utf8'));
   expect(config.routes).toContainEqual({ route: '/assets/*', headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } });
   expect(config.globalHeaders['Content-Security-Policy']).toContain("frame-ancestors 'none'");
+  expect(config.globalHeaders['Content-Security-Policy']).toContain("connect-src 'self' blob:");
   expect(config.globalHeaders['X-Frame-Options']).toBe('DENY');
 });

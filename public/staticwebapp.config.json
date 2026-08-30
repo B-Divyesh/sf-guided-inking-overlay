@@ -5,7 +5,7 @@
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-    "Content-Security-Policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://api.sociobot.in https://pilot-api.sociobot.in; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self' https://api.sociobot.in https://pilot-api.sociobot.in; font-src 'self'; manifest-src 'self'; worker-src 'self'"
+    "Content-Security-Policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://api.sociobot.in https://pilot-api.sociobot.in; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self' blob: https://api.sociobot.in https://pilot-api.sociobot.in; font-src 'self'; manifest-src 'self'; worker-src 'self'"
   },
   "routes": [
     {

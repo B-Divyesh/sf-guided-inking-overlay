@@ -83,6 +83,44 @@ test('390px welcome actions meet the 44px touch-target requirement', async ({ pa
   }
 });
 
+test('390px full editor scan keeps every visible action at least 44px', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Start transparent', exact: true }).click();
+  await page.locator('#reference-file').setInputFiles('public/assets/hero-paper-diorama.webp');
+  await expect(page.locator('#reference-control')).toBeVisible();
+
+  const targets = page.locator('button, a[href], input[type="range"], .switch, .file-button');
+  const failures: string[] = [];
+  for (let index = 0; index < await targets.count(); index += 1) {
+    const target = targets.nth(index);
+    const box = await target.boundingBox();
+    if (!box || box.width === 0 || box.height === 0) continue;
+    if (box.width < 44 || box.height < 44) {
+      failures.push(`${await target.evaluate((element) => element.id || element.className || element.tagName)}: ${box.width.toFixed(2)}×${box.height.toFixed(2)}`);
+    }
+  }
+  expect(failures).toEqual([]);
+});
+
+test('corrupt image recovery stays clean under the production CSP', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  const response = await page.reload();
+  expect(response?.headers()['content-security-policy']).toContain("connect-src 'self' blob:");
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+
+  await page.locator('#reference-file').setInputFiles({
+    name: 'broken.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('not a decodable PNG'),
+  });
+  await expect(page.locator('#toast')).toHaveText('That image could not be decoded. Try exporting it as PNG or JPEG.');
+  await page.locator('#reference-file').setInputFiles('public/assets/hero-paper-diorama.webp');
+  await expect(page.locator('#reference-control')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test('keyboard shortcuts and canvas arrow controls remain operable', async ({ page }) => {
   await page.getByRole('button', { name: 'Start transparent' }).click();
   const canvas = page.getByLabel(/Guide canvas/);
