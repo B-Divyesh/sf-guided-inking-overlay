@@ -1,4 +1,4 @@
-# Ink Guides repair 4 handoff — ready to deploy
+# Ink Guides repair 4 handoff — PASS
 
 ## Outcome
 
@@ -64,16 +64,33 @@ successfully in both required viewports and is the recorded Axe evidence.
 
 ## Deployment and post-deploy check
 
-Deploy `dist/` as the existing Azure Static Web App using:
+`/opt/fleet/lib/deploy-static.sh guided-inking-overlay dist` deployed the
+existing Azure Static Web App successfully on 2026-08-30 UTC (deployment ID
+`fbcbae25-d16c-45ea-be40-121fddff5627`). The live site is
+<https://guided-inking-overlay.sociobot.in>.
 
-```sh
-/opt/fleet/lib/deploy-static.sh guided-inking-overlay dist
-```
+Fresh SHA-256 comparisons were exact matches between `dist/` and production:
 
-Then compare local/live SHA-256 for `index.html`, `sw.js`, the hashed JS/CSS,
-and `hero-paper-diorama.webp`; repeat the corrupt-image and 390px target scan
-against <https://guided-inking-overlay.sociobot.in>. Post-deployment evidence
-will be appended by the deploy step.
+| Artifact | SHA-256 |
+| --- | --- |
+| `index.html` | `8a651b3bf460866d632f0abd4f59b7a8b1709e55bc65d827bee7239219ed6e06` |
+| `sw.js` | `86af60f03f702b506288e598e43945406fefde23ba47836ed23af8cf9476a0cb` |
+| `site.webmanifest` | `f163e12fe0b306b6472cfa3151f4e3f503e25f9ded05bd7c86664f1b517a5223` |
+| `assets/index-C2a9TfwX.js` | `08833ba474ec12bd0f335573c4c1e39b3f43921fe767f33dbef2d44ffe897b43` |
+| `assets/index-DYbs0gY3.css` | `31d168fe72a98b762d0cb9002103bf766dcc2c4dc9251d33b8fdc8c8f8cc8ac7` |
+| `assets/hero-paper-diorama.webp` | `a583689bf711d51572f52938b224651d83623c7c5088711cc9c956688444c540` |
+
+Live root policy has CSP with `connect-src 'self' blob:`, frame denial,
+HSTS/nosniff/referrer/permissions headers, and a 30-second shell cache. The
+hashed JavaScript returns `public, max-age=31536000, immutable`.
+
+Fresh production verification passed: `/opt/fleet/lib/verify-url.sh` returned
+200 in 641ms with no console/page errors and the expected title/lang/h1/main.
+At 390px, 30 visible actionable targets had a 44px minimum width and height;
+corrupt PNG recovery gave the recovery message, a valid WebP recovered, a
+controlling service worker was present, and the browser logged no errors or
+cross-origin requests. Production Axe found zero serious/critical violations.
+An installed production shell also reloaded successfully offline.
 
 ## Known gaps
 
