@@ -64,6 +64,83 @@ test('checkout return stores and verifies the Studio license', async ({ page }) 
   expect(await page.evaluate(() => localStorage.getItem('sb_license:guided-inking-overlay'))).toBe('test-license-token');
 });
 
+test('keeps a first-time offline license return on the free tier', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const token = 'definitely-invalid-offline-regression-token';
+
+  await page.goto('http://127.0.0.1:4173/');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
+  await page.evaluate(() => localStorage.clear());
+
+  await context.setOffline(true);
+  await page.goto(`http://127.0.0.1:4173/?license=${token}`);
+
+  await expect(page.locator('#scene-count')).toHaveText('0 / 3');
+  await expect(page.locator('#png-label')).toHaveText('1200 × 800 · free');
+  await expect(page.locator('#unlock-label')).toHaveText('Studio');
+  await expect(page.locator('#license-status')).toHaveText('Could not reach the license service. Your free workspace still works; try again when online.');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('sb_license:guided-inking-overlay'))).toBe(token);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('sb_license_verdict:guided-inking-overlay'))).toBeNull();
+
+  await context.setOffline(false);
+  await context.close();
+});
+
+test('keeps a matching verified Studio license available offline', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const token = 'recorded-valid-offline-license';
+
+  await page.goto('http://127.0.0.1:4173/');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
+  await page.evaluate(({ token, verdict }) => {
+    localStorage.setItem('sb_license:guided-inking-overlay', token);
+    localStorage.setItem('sb_license_verdict:guided-inking-overlay', JSON.stringify(verdict));
+  }, { token, verdict: { license: token, valid: true, checkedAt: Date.now() } });
+
+  await context.setOffline(true);
+  await page.reload();
+
+  await expect(page.locator('#scene-count')).toHaveText('0 / 20');
+  await expect(page.locator('#png-label')).toHaveText('2400 × 1600 · Studio');
+  await expect(page.locator('#unlock-label')).toHaveText('Studio unlocked');
+
+  await context.setOffline(false);
+  await context.close();
+});
+
+test('does not borrow a cached verdict for a different offline license return', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const cachedToken = 'previously-verified-license';
+  const returnedToken = 'different-unverified-license';
+
+  await page.goto('http://127.0.0.1:4173/');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
+  await page.evaluate(({ cachedToken, verdict }) => {
+    localStorage.setItem('sb_license:guided-inking-overlay', cachedToken);
+    localStorage.setItem('sb_license_verdict:guided-inking-overlay', JSON.stringify(verdict));
+  }, { cachedToken, verdict: { license: cachedToken, valid: true, checkedAt: Date.now() } });
+
+  await context.setOffline(true);
+  await page.goto(`http://127.0.0.1:4173/?license=${returnedToken}`);
+
+  await expect(page.locator('#scene-count')).toHaveText('0 / 3');
+  await expect(page.locator('#png-label')).toHaveText('1200 × 800 · free');
+  await expect(page.locator('#unlock-label')).toHaveText('Studio');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('sb_license:guided-inking-overlay'))).toBe(returnedToken);
+
+  await context.setOffline(false);
+  await context.close();
+});
+
 test('legal pages have one heading and mobile layout does not overflow', async ({ page }) => {
   await page.goto('/privacy');
   await expect(page.getByRole('heading', { name: 'Privacy', level: 1 })).toHaveCount(1);
@@ -131,6 +208,12 @@ test('demo, Studio dialog, and privacy route have no serious accessibility issue
     const results = await scan();
     expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
   }
+});
+
+test('demo has no complementary landmark nested inside the editor', async ({ page }) => {
+  await page.goto('/demo');
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => violation.id === 'landmark-complementary-is-top-level')).toEqual([]);
 });
 
 test('pen-style and touch pointers draw splines at 390px', async ({ page }) => {

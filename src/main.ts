@@ -10,6 +10,7 @@ type GuideState = {
   style: { opacity: number; width: number };
 };
 type Scene = { id: string; name: string; updatedAt: string; state: GuideState };
+type LicenseVerdict = { license: string; valid: boolean; checkedAt: number };
 
 const SLUG = 'guided-inking-overlay';
 const APP_VERSION = '1.0.1';
@@ -108,13 +109,13 @@ function studioPage(): string {
     <a class="brand" href="/" data-route aria-label="Ink Guides home">${icon('mark')}<span>Ink Guides</span></a>
     <nav class="top-actions" aria-label="Main"><span class="connection" id="connection"><span></span> Works offline</span><a class="quiet-link" href="/demo" data-route>Demo</a><button class="quiet-button" id="open-help">How it works</button><button class="unlock-button" id="open-license">${icon('lock')}<span id="unlock-label">Studio</span></button></nav>
   </header>
-  ${demoMode ? `<aside class="demo-banner" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved</strong><span>Try the prepared station and awning guides.</span><div><button class="secondary" id="reset-demo">Reset demo</button><a class="primary" href="/" data-route data-leave-demo>Start for real</a></div></aside>` : ''}
+  ${demoMode ? `<div class="demo-banner" role="note" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved</strong><span>Try the prepared station and awning guides.</span><div><button class="secondary" id="reset-demo">Reset demo</button><a class="primary" href="/" data-route data-leave-demo>Start for real</a></div></div>` : ''}
   <main id="main" class="studio">
     <section class="intro" aria-labelledby="page-title">
       <div class="intro-copy"><p class="eyebrow">Guides for comic and concept artists</p><h1 id="page-title" tabindex="-1">Draw perspective and curved inking guides</h1><p class="intro-lede">Build reusable guide layers over a private reference, then export them to your art app.</p>${demoMode ? '' : '<div class="intro-action"><a class="primary" href="/demo" data-route>Try it with sample data</a><span>Loads two prepared guide scenes in a separate demo.</span></div>'}<ul class="hero-facts"><li>Works offline after your first visit.</li><li>References stay on this device.</li><li>Free editor included. Studio costs $9 once.</li></ul></div>
     </section>
     <section class="workbench" aria-label="Guide editor">
-      <aside class="controls paper-panel" aria-label="Guide controls">
+      <div class="controls paper-panel">
         <div class="panel-heading"><div><p class="step">01 / shape</p><h2>Guide bench</h2></div><button id="reset" class="icon-button" title="Reset guides" aria-label="Reset guides">↺</button></div>
         <fieldset><legend>Tool</legend><div class="tool-row" role="group" aria-label="Canvas tool">
           <button class="tool active" data-tool="select" aria-pressed="true">${icon('cursor')} Select <kbd>V</kbd></button>
@@ -136,7 +137,7 @@ function studioPage(): string {
           ${rangeControl('guide-width', 'Weight', 1, 6, 0.5, 2, ' px')}
         </fieldset>
         <div class="history-row"><button id="undo" class="secondary" disabled>${icon('undo')} Undo</button><button id="redo" class="secondary" disabled>Redo</button></div>
-      </aside>
+      </div>
       <div class="drawing-area">
         <div class="canvas-bar">
           <div class="canvas-title"><span class="paper-dot"></span><span><strong>Untitled guide</strong><small id="canvas-summary">9 fan lines · no spline yet</small></span></div>
@@ -675,17 +676,16 @@ async function initializeLicense(): Promise<void> {
   const params = new URLSearchParams(location.search); const returned = params.get('license');
   if (returned) { localStorage.setItem(LICENSE_KEY, returned); params.delete('license'); history.replaceState({}, '', `${location.pathname}${params.size ? `?${params}` : ''}${location.hash}`); }
   const token = returned || localStorage.getItem(LICENSE_KEY); if (!token) { applyUnlock(false); return; }
-  let cached: { valid: boolean; checkedAt: number } | null = null;
-  try { cached = JSON.parse(localStorage.getItem(VERDICT_KEY) || 'null'); } catch { /* ignore corrupt cache */ }
-  applyUnlock(cached?.valid !== false);
-  if (!cached || Date.now() - cached.checkedAt > 86_400_000 || returned) await verifyLicense(token, false);
+  const cached = readLicenseVerdict();
+  applyUnlock(cached?.valid === true && cached.license === token);
+  if (!cached || cached.license !== token || Date.now() - cached.checkedAt > 86_400_000 || returned) await verifyLicense(token, false);
 }
 
 async function restoreLicense(): Promise<void> {
   if (demoMode) { byId('license-status').textContent = 'Start for real before restoring a license.'; return; }
   const input = byId<HTMLInputElement>('license-token'); const token = input.value.trim();
   if (!token) { input.setCustomValidity('Paste the license token from your receipt.'); input.reportValidity(); input.addEventListener('input', () => input.setCustomValidity(''), { once: true }); return; }
-  localStorage.setItem(LICENSE_KEY, token); byId('license-status').textContent = 'Checking your license…'; await verifyLicense(token, true);
+  localStorage.setItem(LICENSE_KEY, token); applyUnlock(false); byId('license-status').textContent = 'Checking your license…'; await verifyLicense(token, true);
 }
 
 async function verifyLicense(token: string, announce: boolean): Promise<void> {
@@ -693,14 +693,23 @@ async function verifyLicense(token: string, announce: boolean): Promise<void> {
     const response = await fetch(`${BILLING_BASE}/api/v1/products/${SLUG}/verify?license=${encodeURIComponent(token)}`, { headers: { Accept: 'application/json' } });
     if (!response.ok) throw new Error('service');
     const verdict = await response.json() as { valid: boolean; reason?: string };
-    localStorage.setItem(VERDICT_KEY, JSON.stringify({ valid: verdict.valid, checkedAt: Date.now() })); applyUnlock(verdict.valid);
+    const valid = verdict.valid === true;
+    localStorage.setItem(VERDICT_KEY, JSON.stringify({ license: token, valid, checkedAt: Date.now() })); applyUnlock(valid);
     const status = document.getElementById('license-status');
-    if (status) status.textContent = verdict.valid ? 'Studio is unlocked on this device.' : 'This license is no longer active. Check the token or buy a new license.';
-    if (announce) notify(verdict.valid ? 'Studio unlocked. Thank you.' : 'That license could not be verified.');
+    if (status) status.textContent = valid ? 'Studio is unlocked on this device.' : 'This license is no longer active. Check the token or buy a new license.';
+    if (announce) notify(valid ? 'Studio unlocked. Thank you.' : 'That license could not be verified.');
   } catch {
     const status = document.getElementById('license-status'); if (status) status.textContent = 'Could not reach the license service. Your free workspace still works; try again when online.';
     if (announce) notify('License check is offline. Please try again when connected.');
   }
+}
+
+function readLicenseVerdict(): LicenseVerdict | null {
+  try {
+    const verdict = JSON.parse(localStorage.getItem(VERDICT_KEY) || 'null') as Partial<LicenseVerdict> | null;
+    if (!verdict || typeof verdict.license !== 'string' || typeof verdict.valid !== 'boolean' || typeof verdict.checkedAt !== 'number') return null;
+    return { license: verdict.license, valid: verdict.valid, checkedAt: verdict.checkedAt };
+  } catch { return null; }
 }
 
 function applyUnlock(value: boolean): void {
