@@ -10,6 +10,7 @@ Commit `f1aa8a4bab3677576ea11d9dbf40a6152a3e4316` repairs every finding in `.fac
 - Clean-clone gates passed: `npm ci`, `npm test` (**12/12**), `npm run typecheck`, `npm run lint`, and `npm run build`.
 - Every exact command in `.factory/claims.json` ran separately from that clean clone with Chromium. All **12/12** passed: `guide-creation`, `reference-privacy`, `local-scenes`, `geometry-exports`, `offline-reload`, `keyboard-controls`, `free-tier`, `studio-tier`, `studio-price`, `daily-license-verification`, `demo-sandbox`, and `no-tracking`.
 - Full clean-clone browser suite: `npm run test:e2e -- --workers=4 --reporter=line` — **70/70 passed** across desktop Chromium and 390 × 844 mobile. It includes Playwright Axe scans with zero serious/critical findings, touch targets, keyboard controls, service-worker offline reload, privacy requests, route focus, demo isolation, metadata, and hard-404 regressions.
+- `npm run check:billing-live` passed with an invalid-token verdict and the hosted checkout redirect. It did not start a purchase.
 - Build budget: JavaScript **34.83 kB raw / 12.36 kB gzip**; CSS **20.10 kB raw / 5.51 kB gzip**; the reviewed hero WebP remains 59.28 kB.
 - Local URL verification: `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173/ …` passed with one H1, `lang=en`, main landmark, alt text, named buttons, and no console errors. Mobile screenshots: `/tmp/ink-guides-root-390.png` and `/tmp/ink-guides-demo-390.png`.
 
