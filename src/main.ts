@@ -84,9 +84,13 @@ const icon = (name: 'mark' | 'cursor' | 'fan' | 'curve' | 'upload' | 'save' | 'e
   return `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[name]}</svg>`;
 };
 
+function header(): string {
+  return `<header class="topbar"><a class="brand" href="/" data-route aria-label="Ink Guides home">${icon('mark')}<span>Ink Guides</span></a><nav class="top-actions" aria-label="Main"><a class="quiet-link" href="/demo" data-route>Demo</a><a class="quiet-link" href="/#how-it-works" data-route>View three steps</a><a class="quiet-link" href="/#studio-price" data-route>View Studio price</a><a class="quiet-link" href="/privacy" data-route>Privacy</a></nav><span class="plan-status" id="unlock-label" aria-live="polite">Studio</span></header>`;
+}
+
 function legalPage(kind: 'privacy' | 'terms'): string {
   const privacy = kind === 'privacy';
-  return `<header class="topbar"><a class="brand" href="/" data-route>${icon('mark')}<span>Ink Guides</span></a><nav class="top-actions" aria-label="Main"><a class="quiet-link" href="/demo" data-route>Demo</a><a class="paper-link" href="/" data-route>Back to studio</a></nav></header>
+  return `${header()}
   <main id="main" class="legal paper-sheet">
     <p class="eyebrow">Ink Guides policies</p>
     <h1 tabindex="-1">${privacy ? 'Privacy' : 'Terms'}</h1>
@@ -101,14 +105,11 @@ function legalPage(kind: 'privacy' | 'terms'): string {
 }
 
 function footer(): string {
-  return `<footer><p>Draw guide layers without uploading artwork. <span aria-hidden="true">✦</span> Original generated imagery. <span class="build-id">Version ${APP_VERSION}</span></p><nav aria-label="Footer"><a href="/demo" data-route>Demo</a><a href="/privacy" data-route>Privacy</a><a href="/terms" data-route>Terms</a><a href="https://github.com/B-Divyesh/sf-guided-inking-overlay" rel="noreferrer">Source</a></nav></footer>`;
+  return `<footer><p>Draw guide layers without uploading artwork. <span>Built by Param Factory.</span> <span class="build-id">Version ${APP_VERSION}</span></p><nav aria-label="Footer"><a href="/demo" data-route>Demo</a><a href="/privacy" data-route>Privacy</a><a href="/terms" data-route>Terms</a><a href="https://github.com/B-Divyesh/sf-guided-inking-overlay" rel="noreferrer">Source</a></nav></footer>`;
 }
 
 function studioPage(): string {
-  return `<header class="topbar">
-    <a class="brand" href="/" data-route aria-label="Ink Guides home">${icon('mark')}<span>Ink Guides</span></a>
-    <nav class="top-actions" aria-label="Main"><span class="connection" id="connection"><span></span> Works offline</span><a class="quiet-link" href="/demo" data-route>Demo</a><button class="quiet-button" id="open-help">How it works</button><button class="unlock-button" id="open-license">${icon('lock')}<span id="unlock-label">Studio</span></button></nav>
-  </header>
+  return `${header()}
   ${demoMode ? `<div class="demo-banner" role="note" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved</strong><span>Try the prepared station and awning guides.</span><div><button class="secondary" id="reset-demo">Reset demo</button><a class="primary" href="/" data-route data-leave-demo>Start for real</a></div></div>` : ''}
   <main id="main" class="studio">
     <section class="intro" aria-labelledby="page-title">
@@ -116,21 +117,21 @@ function studioPage(): string {
     </section>
     <section class="workbench" aria-label="Guide editor">
       <div class="controls paper-panel">
-        <div class="panel-heading"><div><p class="step">01 / shape</p><h2>Guide bench</h2></div><button id="reset" class="icon-button" title="Reset guides" aria-label="Reset guides">↺</button></div>
+        <div class="panel-heading"><div><p class="step">01 / shape</p><h2>Guide controls</h2></div><button id="reset" class="icon-button" title="Reset guides" aria-label="Reset guides">↺</button></div>
         <fieldset><legend>Tool</legend><div class="tool-row" role="group" aria-label="Canvas tool">
           <button class="tool active" data-tool="select" aria-pressed="true">${icon('cursor')} Select <kbd>V</kbd></button>
           <button class="tool" data-tool="fan" aria-pressed="false">${icon('fan')} Aim fan <kbd>F</kbd></button>
-          <button class="tool" data-tool="spline" aria-pressed="false">${icon('curve')} Draw spline <kbd>S</kbd></button>
+          <button class="tool" data-tool="spline" aria-pressed="false">${icon('curve')} Draw curved guide (spline) <kbd>S</kbd></button>
         </div></fieldset>
         <fieldset><legend><span>Perspective fan</span><label class="switch"><input id="fan-visible" type="checkbox" checked><span>Show</span></label></legend>
           ${rangeControl('density', 'Lines', 3, 25, 1, 9)}
           ${rangeControl('rotation', 'Rotation', -180, 180, 1, 115, '°')}
           ${rangeControl('spread', 'Fan spread', 30, 180, 1, 142, '°')}
         </fieldset>
-        <fieldset><legend>Parallel spline rails</legend>
+        <fieldset><legend>Parallel curved rails</legend>
           ${rangeControl('rail-count', 'Rails', 1, 11, 2, 5)}
           ${rangeControl('rail-gap', 'Spacing', 6, 64, 1, 24, ' px')}
-          <button id="delete-spline" class="secondary full" disabled>Delete selected spline</button>
+          <button id="delete-spline" class="secondary full" disabled>Delete selected curved guide</button>
         </fieldset>
         <fieldset><legend>Ink</legend>
           ${rangeControl('guide-opacity', 'Opacity', 20, 100, 1, 78, '%')}
@@ -140,20 +141,21 @@ function studioPage(): string {
       </div>
       <div class="drawing-area">
         <div class="canvas-bar">
-          <div class="canvas-title"><span class="paper-dot"></span><span><strong>Untitled guide</strong><small id="canvas-summary">9 fan lines · no spline yet</small></span></div>
-          <div class="canvas-actions"><label class="file-button">${icon('upload')}<span>Reference</span><input id="reference-file" type="file" aria-label="Choose reference image" accept="image/png,image/jpeg,image/webp,image/gif" /></label><button class="secondary" id="clear-reference" hidden>Remove image</button></div>
+          <div class="canvas-title"><span class="paper-dot"></span><span><strong>Untitled guide</strong><small id="canvas-summary">9 fan lines · no curved guide yet</small></span></div>
+          <div class="canvas-actions"><label class="file-button">${icon('upload')}<span>Choose reference</span><input id="reference-file" type="file" aria-label="Choose reference image" accept="image/png,image/jpeg,image/webp,image/gif" /></label><button class="secondary" id="clear-reference" hidden>Remove image</button></div>
         </div>
         <div class="canvas-shell" id="canvas-shell">
-          <canvas id="guide-canvas" width="1200" height="800" tabindex="0" aria-label="Guide canvas. Drag the coral vanishing point or draw a spline. Arrow keys move a selected point."></canvas>
+          <canvas id="guide-canvas" width="1200" height="800" tabindex="0" aria-label="Guide canvas. Drag the coral vanishing point or draw a curved guide. Arrow keys move a selected point."></canvas>
           <div class="canvas-welcome" id="canvas-welcome"${demoMode ? ' hidden' : ''}>
             <img src="/assets/hero-paper-diorama.webp" width="960" height="640" alt="Paper-cut drafting desk with coral perspective threads and cyan curved rails" fetchpriority="high" decoding="async" />
-            <div><p class="eyebrow">Choose your canvas</p><h2>Use a reference or start blank.</h2><p>Ink Guides does not upload your reference.</p><div><button id="welcome-reference" class="primary">Choose reference</button><button id="welcome-clear" class="secondary">Start transparent</button></div></div>
+            <div><p class="eyebrow">Choose a reference image</p><h2>Use a reference or start blank.</h2><p>Ink Guides does not upload your reference.</p><div><button id="welcome-reference" class="primary">Choose reference</button><button id="welcome-clear" class="secondary">Start transparent</button></div></div>
           </div>
           <p class="canvas-hint" id="canvas-hint">Drag the coral pin to aim · press S to draw a curve</p>
         </div>
         <div class="reference-control" id="reference-control" hidden>${rangeControl('reference-opacity', 'Reference opacity', 10, 100, 1, 55, '%')}</div>
       </div>
     </section>
+    <section class="how-it-works paper-panel" id="how-it-works" aria-labelledby="how-it-works-title"><div><p class="step">Make a guide layer</p><h2 id="how-it-works-title">How to make a guide layer</h2><p>Use these three steps with a reference image or a blank page.</p></div><ol><li><strong>Aim the perspective fan</strong><span>Drag the coral pin and adjust the lines.</span></li><li><strong>Draw a curved guide</strong><span>Draw one curve to create parallel rails.</span></li><li><strong>Export the guide layer</strong><span>Save SVG or transparent PNG geometry.</span></li></ol><button class="secondary" id="open-help">Open the three-step guide</button></section>
     <section class="lower-bench">
       <div class="scene-section paper-panel"><div class="section-title"><div><p class="step">02 / save</p><h2>Saved scenes</h2><p>Scenes store guide geometry without your reference.</p></div><span class="scene-count" id="scene-count">${scenes.length} / 3</span></div>
         <div class="save-row"><label for="scene-name">Scene name</label><div><input id="scene-name" type="text" maxlength="42" autocomplete="off" placeholder="Alley, low angle…"><button id="save-scene" class="primary">${icon('save')} Save scene</button></div></div>
@@ -161,14 +163,14 @@ function studioPage(): string {
       </div>
       <div class="export-section paper-panel"><div class="section-title"><div><p class="step">03 / export</p><h2>Export guide layers</h2><p>SVG and PNG exports exclude your reference.</p></div>${icon('export')}</div>
         <div class="export-options"><button id="export-svg" class="primary big">Export SVG <small>Vector · free</small></button><button id="export-png" class="secondary big">Export PNG <small id="png-label">1200 × 800 · free</small></button></div>
-        <p class="export-note"><span aria-hidden="true">✓</span> Transparent background · artwork-safe</p>
+        <p class="export-note"><span aria-hidden="true">✓</span> Transparent PNG with guide geometry only.</p>
       </div>
     </section>
-    <section class="studio-offer" aria-labelledby="studio-title"><div><p class="eyebrow">Studio plan</p><h2 id="studio-title">Save 20 scenes and export larger PNGs.</h2><p>Studio adds 20 local scenes and 2400 × 1600 PNG export. Drawing and SVG export stay free.</p></div><div class="price"><strong>$9</strong><span>one time</span><button class="primary" id="offer-unlock">Buy Studio once</button></div></section>
+    <section class="studio-offer" id="studio-price" aria-labelledby="studio-title"><div><p class="eyebrow">Studio plan</p><h2 id="studio-title">Save 20 scenes and export larger PNGs.</h2><p>Studio adds 20 local scenes and 2400 × 1600 PNG export. Drawing and SVG export stay free.</p></div><div class="price"><strong>$9</strong><span>one time</span><button class="primary" id="offer-unlock">Buy Studio once</button></div></section>
   </main>
   ${footer()}
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <dialog id="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close help">×</button><p class="eyebrow">Three steps</p><h2>Create and export a guide layer.</h2><ol><li><strong>Aim.</strong> Choose Aim fan and drag the coral pin. Adjust density, rotation, and spread.</li><li><strong>Draw.</strong> Choose Draw spline, then draw one curve on the canvas. Ink Guides repeats it in parallel.</li><li><strong>Export.</strong> Save the scene or export transparent SVG and PNG geometry.</li></ol><p class="key-help">Keyboard: V selects. F aims the fan. S draws a spline. Arrow keys move points. Shift moves 10 pixels. Delete removes a spline.</p></form></dialog>
+  <dialog id="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close help">×</button><p class="eyebrow">Three steps</p><h2>How to make a guide layer</h2><ol><li><strong>Aim.</strong> Choose Aim fan and drag the coral pin. Adjust density, rotation, and spread.</li><li><strong>Draw.</strong> Choose Draw curved guide, then draw one curve on the canvas. Ink Guides repeats it in parallel.</li><li><strong>Export.</strong> Save the scene or export transparent SVG and PNG geometry.</li></ol><p class="key-help">Keyboard: V selects. F aims the fan. S draws a curved guide. Arrow keys move points. Shift moves 10 pixels. Delete removes a curved guide.</p></form></dialog>
   <dialog id="license-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close Studio panel">×</button><p class="eyebrow">Ink Guides Studio</p><h2>Buy Studio once.</h2><p class="license-copy">Studio costs $9 once. It adds 20 saved scenes and 2400 × 1600 PNG export. SVG export and accessibility remain free.</p><a class="primary buy-link" href="${BILLING_BASE}/api/v1/products/${SLUG}/checkout">Buy Studio — $9</a><p class="merchant">Sociobot/Dodo handles checkout and refunds as the merchant of record.</p><hr><label for="license-token">Have a license? Paste it here</label><input id="license-token" type="text" autocomplete="off" spellcheck="false"><button value="cancel" type="button" class="secondary full" id="restore-license">Verify and restore purchase</button><button value="cancel" type="button" class="text-button" id="remove-license" hidden>Remove license from this device</button><p id="license-status" class="form-status" role="status"></p><p class="legal-links"><a href="/privacy" data-route>Privacy</a> · <a href="/terms" data-route>Terms</a></p></form></dialog>`;
 }
 
@@ -184,9 +186,9 @@ function setPageMetadata(route: string): void {
     : route === '/terms'
       ? { title: 'Terms — Ink Guides', description: 'Terms for the Ink Guides free editor and Studio purchase.', canonical: '/terms' }
       : route === '/demo' || demoMode
-        ? { title: 'Demo — Ink Guides', description: 'Try Ink Guides with two prepared perspective and spline guide scenes.', canonical: '/demo' }
+        ? { title: 'Demo — Ink Guides', description: 'Try Ink Guides with two prepared perspective and curved guide scenes.', canonical: '/demo' }
         : route === '/'
-          ? { title: 'Ink Guides — Draw perspective and spline guides', description: 'Draw reusable perspective fans and curved rails over private references, then export clean SVG and PNG guide layers.', canonical: '/' }
+          ? { title: 'Ink Guides — Draw perspective and curved guides', description: 'Draw reusable perspective fans and curved guides over private references, then export clean SVG and PNG guide layers.', canonical: '/' }
           : { title: 'Page not found — Ink Guides', description: 'This Ink Guides page does not exist.', canonical: route };
   const absolute = (path: string) => new URL(path, 'https://guided-inking-overlay.sociobot.in').href;
   document.title = metadata.title;
@@ -257,6 +259,7 @@ function bindRoutes(): void {
     history.pushState({}, '', target);
     mount(true);
     scrollTo(0, 0);
+    if (link.hash) requestAnimationFrame(() => document.getElementById(link.hash.slice(1))?.scrollIntoView());
   }));
 }
 
@@ -324,7 +327,7 @@ function bindStudio(): void {
   byId('welcome-clear').addEventListener('click', dismissWelcome);
   byId('clear-reference').addEventListener('click', clearReference);
   byId('open-help').addEventListener('click', () => byId<HTMLDialogElement>('help-dialog').showModal());
-  byId('open-license').addEventListener('click', openLicense);
+  document.getElementById('open-license')?.addEventListener('click', openLicense);
   byId('offer-unlock').addEventListener('click', openLicense);
   byId('restore-license').addEventListener('click', restoreLicense);
   byId('remove-license').addEventListener('click', removeLicense);
@@ -362,7 +365,7 @@ function bindRange(id: string, read: () => number, write: (value: number) => voi
 
 function refresh(): void {
   renderCanvas();
-  byId('canvas-summary').textContent = `${state.fan.visible ? `${state.fan.density} fan lines` : 'fan hidden'} · ${state.splines.length ? `${state.splines.length} spline${state.splines.length === 1 ? '' : 's'}` : 'no spline yet'}`;
+  byId('canvas-summary').textContent = `${state.fan.visible ? `${state.fan.density} fan lines` : 'fan hidden'} · ${state.splines.length ? `${state.splines.length} curved guide${state.splines.length === 1 ? '' : 's'}` : 'no curved guide yet'}`;
   const del = byId<HTMLButtonElement>('delete-spline');
   del.disabled = !selectedSpline;
 }
@@ -385,7 +388,7 @@ function setTool(next: Tool): void {
     button.setAttribute('aria-pressed', String(active));
   });
   byId('canvas-shell').dataset.tool = next;
-  byId('canvas-hint').textContent = next === 'spline' ? 'Draw one flowing curve · lift to create parallel rails' : next === 'fan' ? 'Drag anywhere to place the coral vanishing point' : 'Select the coral pin or a yellow spline knot';
+  byId('canvas-hint').textContent = next === 'spline' ? 'Draw one flowing curve · lift to create parallel rails' : next === 'fan' ? 'Drag anywhere to place the coral vanishing point' : 'Select the coral pin or a yellow curved-guide point';
 }
 
 function canvasPoint(event: PointerEvent): Point {
@@ -429,7 +432,7 @@ function pointerUp(): void {
     if (points.length > 2 && distance(points[0]!, points.at(-1)!) > 10) {
       const spline: Spline = { id: crypto.randomUUID(), points };
       state.splines.push(spline); selectedSpline = spline.id; selectedPoint = -1;
-      notify('Spline rails added.');
+      notify('Curved guide rails added.');
     } else undoStack.pop();
     drawingPoints = [];
   }
@@ -477,7 +480,7 @@ function deleteSelectedSpline(): void {
   pushUndo();
   state.splines = state.splines.filter((item) => item.id !== selectedSpline);
   selectedSpline = null; selectedPoint = -1;
-  notify('Spline removed. Undo is available.');
+  notify('Curved guide removed. Undo is available.');
   refresh();
 }
 
@@ -501,7 +504,7 @@ function updateHistoryButtons(): void {
 }
 
 function resetGuides(): void {
-  if (!confirm('Reset all fan and spline geometry? Your saved scenes will stay on the shelf.')) return;
+  if (!confirm('Reset all fan and curved-guide geometry? Your saved scenes will stay on the shelf.')) return;
   pushUndo(); state = defaultState(); selectedSpline = null; selectedPoint = -1; refreshControls(); refresh(); notify('Guide geometry reset.');
 }
 
@@ -610,7 +613,7 @@ function renderScenes(): void {
   const list = document.getElementById('scene-list'); if (!list) return;
   byId('scene-count').textContent = `${scenes.length} / ${unlocked ? 20 : 3}`;
   if (!scenes.length) { list.innerHTML = `<div class="empty-scene"><span aria-hidden="true">◇</span><div><strong>Your shelf is empty.</strong><p>Name this setup to reuse it in one tap.</p></div></div>`; return; }
-  list.innerHTML = scenes.map((scene) => `<article class="scene-card"><button class="scene-load" data-load="${scene.id}"><span class="scene-mini" aria-hidden="true">${miniature(scene.state)}</span><span><strong>${escapeHtml(scene.name)}</strong><small>${scene.state.fan.density} lines · ${scene.state.splines.length} spline${scene.state.splines.length === 1 ? '' : 's'} · ${formatDate(scene.updatedAt)}</small></span></button><button class="scene-delete" data-delete="${scene.id}" aria-label="Delete ${escapeHtml(scene.name)}">×</button></article>`).join('');
+  list.innerHTML = scenes.map((scene) => `<article class="scene-card"><button class="scene-load" data-load="${scene.id}"><span class="scene-mini" aria-hidden="true">${miniature(scene.state)}</span><span><strong>${escapeHtml(scene.name)}</strong><small>${scene.state.fan.density} lines · ${scene.state.splines.length} curved guide${scene.state.splines.length === 1 ? '' : 's'} · ${formatDate(scene.updatedAt)}</small></span></button><button class="scene-delete" data-delete="${scene.id}" aria-label="Delete ${escapeHtml(scene.name)}">×</button></article>`).join('');
   list.querySelectorAll<HTMLButtonElement>('[data-load]').forEach((button) => button.addEventListener('click', () => loadScene(button.dataset.load!)));
   list.querySelectorAll<HTMLButtonElement>('[data-delete]').forEach((button) => button.addEventListener('click', () => deleteScene(button.dataset.delete!)));
 }

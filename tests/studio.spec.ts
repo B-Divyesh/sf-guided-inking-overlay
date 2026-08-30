@@ -13,7 +13,7 @@ test('studio works end to end without serious accessibility issues', async ({ pa
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
   await page.getByRole('button', { name: 'Start transparent' }).click();
-  await page.getByRole('button', { name: /Draw spline/ }).click();
+  await page.getByRole('button', { name: /Draw curved guide/ }).click();
   const canvas = page.getByLabel(/Guide canvas/);
   await canvas.scrollIntoViewIfNeeded();
   const bounds = await canvas.boundingBox();
@@ -25,7 +25,7 @@ test('studio works end to end without serious accessibility issues', async ({ pa
     await page.mouse.move(bounds.x + bounds.width * .72, bounds.y + bounds.height * .57, { steps: 8 });
     await page.mouse.up();
   }
-  await expect(page.locator('#canvas-summary')).toContainText('1 spline');
+  await expect(page.locator('#canvas-summary')).toContainText('1 curved guide');
   await page.getByLabel('Scene name').fill('Rooftop sweep');
   await page.getByRole('button', { name: /Save scene/ }).click();
   await expect(page.getByRole('button', { name: /Rooftop sweep 9 lines/ })).toBeVisible();
@@ -146,8 +146,26 @@ test('legal pages have one heading and mobile layout does not overflow', async (
   await expect(page.getByRole('heading', { name: 'Privacy', level: 1 })).toHaveCount(1);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
   expect(overflow).toBe(false);
-  await page.getByRole('link', { name: 'Back to studio' }).click();
-  await expect(page).toHaveURL('/');
+  await page.getByRole('link', { name: 'View three steps' }).click();
+  await expect(page).toHaveURL('/#how-it-works');
+  await expect(page.getByRole('heading', { name: 'How to make a guide layer', level: 2 })).toBeVisible();
+});
+
+test('shows a visible three-step guide and shared navigation on every app route', async ({ page }) => {
+  await expect(page.getByRole('heading', { name: 'How to make a guide layer', level: 2 })).toBeVisible();
+  const steps = page.locator('#how-it-works li');
+  await expect(steps.nth(0)).toContainText('Aim the perspective fan');
+  await expect(steps.nth(1)).toContainText('Draw a curved guide');
+  await expect(steps.nth(2)).toContainText('Export the guide layer');
+  for (const route of ['/', '/demo', '/privacy', '/terms']) {
+    await page.goto(route);
+    const navigation = page.getByRole('navigation', { name: 'Main' });
+    await expect(navigation.getByRole('link', { name: 'Demo' })).toBeVisible();
+    await expect(navigation.getByRole('link', { name: 'View three steps' })).toBeVisible();
+    await expect(navigation.getByRole('link', { name: 'View Studio price' })).toBeVisible();
+    await expect(navigation.getByRole('link', { name: 'Privacy' })).toBeVisible();
+    await expect(page.locator('footer')).toContainText('Built by Param Factory.');
+  }
 });
 
 test('first screen names the job, artists, next step, and sample demo', async ({ page }) => {
@@ -158,11 +176,11 @@ test('first screen names the job, artists, next step, and sample demo', async ({
   await page.getByRole('link', { name: 'Try it with sample data' }).click();
   await expect(page).toHaveURL('/demo');
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
-  await expect(page.locator('#canvas-summary')).toHaveText('13 fan lines · 1 spline');
+  await expect(page.locator('#canvas-summary')).toHaveText('13 fan lines · 1 curved guide');
 });
 
 test('SPA route changes focus and announce the new page', async ({ page }) => {
-  await page.getByRole('link', { name: 'Privacy' }).click();
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Privacy' }).click();
   const privacyHeading = page.getByRole('heading', { level: 1, name: 'Privacy' });
   await expect(privacyHeading).toBeFocused();
   await expect(page.locator('#route-announcer')).toHaveText('Privacy page loaded');
@@ -181,6 +199,7 @@ test('unknown SPA paths show the designed 404 and a way home', async ({ page }) 
 });
 
 test('route metadata and install icons are complete', async ({ page, request }) => {
+  await expect(page).toHaveTitle('Ink Guides — Draw perspective and curved guides');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://guided-inking-overlay.sociobot.in/');
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /ink-guides-social\.webp$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
@@ -191,12 +210,24 @@ test('route metadata and install icons are complete', async ({ page, request }) 
   expect(manifest.icons).toHaveLength(2);
 });
 
+test('hard 404 ships complete social metadata', async () => {
+  const html = await readFile('public/404.html', 'utf8');
+  for (const marker of [
+    'property="og:title" content="Page not found — Ink Guides"',
+    'property="og:description" content="This Ink Guides page does not exist."',
+    'property="og:image" content="https://guided-inking-overlay.sociobot.in/assets/ink-guides-social.webp"',
+    'name="twitter:card" content="summary_large_image"',
+    'name="twitter:title" content="Page not found — Ink Guides"',
+    'name="twitter:description" content="This Ink Guides page does not exist."',
+  ]) expect(html).toContain(marker);
+});
+
 test('demo, Studio dialog, and privacy route have no serious accessibility issues', async ({ page }) => {
   await page.goto('/demo');
   for (const scan of [
     async () => new AxeBuilder({ page }).analyze(),
     async () => {
-      await page.getByRole('button', { name: 'Studio', exact: true }).click();
+      await page.getByRole('button', { name: 'Buy Studio once', exact: true }).click();
       return new AxeBuilder({ page }).include('#license-dialog').analyze();
     },
     async () => {
@@ -219,7 +250,7 @@ test('demo has no complementary landmark nested inside the editor', async ({ pag
 test('pen-style and touch pointers draw splines at 390px', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/demo');
-  await page.getByRole('button', { name: /Draw spline/ }).click();
+  await page.getByRole('button', { name: /Draw curved guide/ }).click();
   const box = await page.getByLabel(/Guide canvas/).boundingBox();
   expect(box).not.toBeNull();
   const session = await page.context().newCDPSession(page);
@@ -232,12 +263,12 @@ test('pen-style and touch pointers draw splines at 390px', async ({ page }) => {
   await session.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: points[1]!.x, y: points[1]!.y, button: 'left', buttons: 1, pointerType: 'pen' });
   await session.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: points[2]!.x, y: points[2]!.y, button: 'left', buttons: 1, pointerType: 'pen' });
   await session.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: points[2]!.x, y: points[2]!.y, button: 'left', buttons: 0, clickCount: 1, pointerType: 'pen' });
-  await expect(page.locator('#canvas-summary')).toContainText('2 splines');
+  await expect(page.locator('#canvas-summary')).toContainText('2 curved guides');
   await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: points[0]!.x, y: points[0]!.y, id: 4 }] });
   await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: points[1]!.x, y: points[1]!.y, id: 4 }] });
   await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: points[2]!.x, y: points[2]!.y, id: 4 }] });
   await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await expect(page.locator('#canvas-summary')).toContainText('3 splines');
+  await expect(page.locator('#canvas-summary')).toContainText('3 curved guides');
 });
 
 test('390px welcome actions meet the 44px touch-target requirement', async ({ page }) => {
@@ -297,13 +328,13 @@ test('keyboard shortcuts and canvas arrow controls remain operable', async ({ pa
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('button', { name: /Undo/ })).toBeEnabled();
   await page.keyboard.press('s');
-  await expect(page.getByRole('button', { name: /Draw spline/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: /Draw curved guide/ })).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('changing tools repeatedly keeps pressed state on tool buttons only', async ({ page }) => {
   await page.getByRole('button', { name: 'Start transparent' }).click();
   await page.getByRole('button', { name: /Aim fan/ }).click();
-  await page.getByRole('button', { name: /Draw spline/ }).click();
+  await page.getByRole('button', { name: /Draw curved guide/ }).click();
 
   await expect(page.locator('#canvas-shell')).not.toHaveAttribute('aria-pressed');
   const results = await new AxeBuilder({ page }).analyze();

@@ -1,10 +1,10 @@
 [
   {
     "id": "guide-creation",
-    "claim": "Creates adjustable perspective fans and parallel curved rails.",
+    "claim": "Creates adjustable perspective fans and parallel curved guides.",
     "where": "first screen, editor, README",
     "test": "npm run test:e2e -- --project=chromium --grep @claim:guide-creation",
-    "sandbox": "fresh browser context at /demo; adjust fan density and draw a second spline; assert rendered summary"
+    "sandbox": "fresh browser context at /demo; adjust fan density and draw a second curved guide; assert rendered summary"
   },
   {
     "id": "reference-privacy",
@@ -36,10 +36,10 @@
   },
   {
     "id": "keyboard-controls",
-    "claim": "V, F, and S select tools; arrows move a point; Shift moves 10 pixels; Delete removes a spline.",
+    "claim": "V, F, and S select tools; arrows move a point; Shift moves 10 pixels; Delete removes a curved guide.",
     "where": "help dialog, README",
     "test": "npm run test:e2e -- --project=chromium --grep @claim:keyboard-controls",
-    "sandbox": "fresh demo; operate the focused canvas and selected sample spline with keyboard only"
+    "sandbox": "fresh demo; operate the focused canvas and selected sample curved guide with keyboard only"
   },
   {
     "id": "free-tier",

@@ -16,7 +16,7 @@ The default “night table” treatment is intentionally single-mode so imported
 - `chalk` #FFF8E8 — primary text on table (15.9:1)
 - `chalk-muted` #BFC1CE — secondary text on table (9.4:1)
 - `coral` #F0645A — perspective fan / primary action; dark text used on fills
-- `cyan` #38C6C4 — spline rails / focus accent
+- `cyan` #38C6C4 — curved-guide rails / focus accent
 - `marigold` #F2B84B — selected points / warnings
 - `success` #2F8A62; `danger` #A7323B
 
@@ -39,8 +39,8 @@ On desktop the studio is a two-column instrument: 288px guide bench + elastic ca
 ## Interaction grammar
 
 - Drag the coral vanishing-point puck to aim the fan.
-- Choose “Draw spline,” then draw directly with pen, mouse, or one-finger touch; the rails appear on release.
-- Tap a spline knot to select it; arrow keys move it (Shift = 10px).
+- Choose “Draw curved guide (spline),” then draw directly with pen, mouse, or one-finger touch; the rails appear on release.
+- Tap a curved-guide point to select it; arrow keys move it (Shift = 10px).
 - Controls update the drawing immediately. The selected tool is expressed by fill, border, icon, label, and `aria-pressed`.
 - Save is explicit and produces a named local scene. Import never leaves the device. Exported SVG contains guides only, never the reference.
 

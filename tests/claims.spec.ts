@@ -30,14 +30,14 @@ async function saveScene(page: Page, name: string): Promise<void> {
   await page.getByRole('button', { name: /Save scene/ }).click();
 }
 
-test('adjusts a fan and draws parallel spline rails @claim:guide-creation', async ({ page }) => {
+test('adjusts a fan and draws parallel curved rails @claim:guide-creation', async ({ page }) => {
   await page.goto('/demo');
-  await expect(page.locator('#canvas-summary')).toHaveText('13 fan lines · 1 spline');
+  await expect(page.locator('#canvas-summary')).toHaveText('13 fan lines · 1 curved guide');
   await page.getByLabel('Lines').evaluate((input: HTMLInputElement) => {
     input.value = '17';
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
-  await page.getByRole('button', { name: /Draw spline/ }).click();
+  await page.getByRole('button', { name: /Draw curved guide/ }).click();
   const canvas = page.getByLabel(/Guide canvas/);
   const box = await canvas.boundingBox();
   expect(box).not.toBeNull();
@@ -46,7 +46,7 @@ test('adjusts a fan and draws parallel spline rails @claim:guide-creation', asyn
   await page.mouse.move(box!.x + box!.width * .45, box!.y + box!.height * .35, { steps: 8 });
   await page.mouse.move(box!.x + box!.width * .8, box!.y + box!.height * .62, { steps: 8 });
   await page.mouse.up();
-  await expect(page.locator('#canvas-summary')).toHaveText('17 fan lines · 2 splines');
+  await expect(page.locator('#canvas-summary')).toHaveText('17 fan lines · 2 curved guides');
 });
 
 test('decodes supported references without saving or uploading them @claim:reference-privacy', async ({ page }) => {
@@ -77,6 +77,8 @@ test('decodes supported references without saving or uploading them @claim:refer
   }
   await page.locator('#reference-file').setInputFiles(fixtures[0]!);
   await saveScene(page, 'Private panel');
+  await expect(page.locator('.scene-load').filter({ hasText: 'Private panel' })).toBeVisible();
+  await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), DEMO_SCENES)).toContain('Private panel');
   const stored = await page.evaluate((key) => localStorage.getItem(key), DEMO_SCENES);
   expect(stored).toContain('Private panel');
   expect(stored).not.toContain('panel.png');
@@ -135,7 +137,7 @@ test('reloads the installed demo offline @claim:offline-reload', async ({ browse
   await page.reload();
   await expect(page).toHaveTitle('Demo — Ink Guides');
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
-  await expect(page.locator('#canvas-summary')).toHaveText('13 fan lines · 1 spline');
+  await expect(page.locator('#canvas-summary')).toHaveText('13 fan lines · 1 curved guide');
   await context.setOffline(false);
   await context.close();
 });
@@ -149,7 +151,7 @@ test('operates the guide tools from the keyboard @claim:keyboard-controls', asyn
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('button', { name: /Undo/ })).toBeEnabled();
   await page.keyboard.press('s');
-  await expect(page.getByRole('button', { name: /Draw spline/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: /Draw curved guide/ })).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('v');
   await expect(page.getByRole('button', { name: /Select/ })).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('Shift+ArrowLeft');
@@ -157,7 +159,7 @@ test('operates the guide tools from the keyboard @claim:keyboard-controls', asyn
   const stored = JSON.parse((await page.evaluate((key) => localStorage.getItem(key), DEMO_SCENES)) || '[]');
   expect(stored[0].state.splines[0].points[0].x).toBe(111);
   await page.keyboard.press('Delete');
-  await expect(page.locator('#canvas-summary')).toContainText('no spline yet');
+  await expect(page.locator('#canvas-summary')).toContainText('no curved guide yet');
 });
 
 test('enforces the free scene and PNG boundaries @claim:free-tier', async ({ page }) => {
@@ -195,7 +197,7 @@ test('enforces the Studio scene and PNG boundaries @claim:studio-tier', async ({
 
 test('states the exact one-time Studio price and checkout @claim:studio-price', async ({ page }) => {
   await page.goto('/demo');
-  await page.getByRole('button', { name: 'Studio', exact: true }).click();
+  await page.getByRole('button', { name: 'Buy Studio once', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('Studio costs $9 once.');
   await expect(dialog).toContainText('Sociobot/Dodo handles checkout and refunds as the merchant of record.');
@@ -249,7 +251,7 @@ test('keeps the complete free demo flow same-origin @claim:no-tracking', async (
     if (new URL(request.url()).origin !== PRODUCT_ORIGIN) external.push(request.url());
   });
   await page.goto('/demo');
-  await page.getByRole('button', { name: /Draw spline/ }).click();
+  await page.getByRole('button', { name: /Draw curved guide/ }).click();
   await saveScene(page, 'Request audit scene');
   await downloadBytes(page, /Export SVG/);
   await downloadBytes(page, /Export PNG/);

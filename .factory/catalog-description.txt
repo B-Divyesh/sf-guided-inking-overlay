@@ -1,0 +1,1 @@
+Draw perspective and curved guides over private references, then export a clean guide layer.
