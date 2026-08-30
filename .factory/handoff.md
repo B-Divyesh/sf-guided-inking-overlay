@@ -1,4 +1,27 @@
-# Ink Guides verification 8 handoff — PASS
+# Ink Guides review 1 handoff — FAIL
+
+## What was done
+
+Performed the requested adversarial first-read review without modifying product code. The detailed report is in [`.factory/review-1.md`](review-1.md).
+
+The live product was opened from fresh 390 px mobile and desktop contexts, the one-click demo and its separate local-storage namespace were exercised, all prior review/verification findings were rechecked, and all declared claim commands were run from a clean local install.
+
+## Verification
+
+- `npm ci`, `npm test` (12 tests), typecheck, lint, build, and the 66-test Playwright suite passed.
+- All 12 individual claim commands in `.factory/claims.json` passed.
+- Live demo isolation preserved a seeded real scene, wrote only the `demo:` key, and discarded it on exit.
+- Live routes, back/focus behavior, mobile layout, headers, normal-route metadata, no-third-party demo requests, and billing redirect/rate-limit behavior were checked.
+
+## Result and next steps
+
+The review result is **FAIL** because 13 minor findings remain under the zero-findings acceptance rule. No functional or privacy blocker was found. The required repairs are copy/site-structure work: a visible How-it-works section, consistent navigation/footer ownership line, social metadata on the hard 404, removal or proof of two unlisted assertions, plain-language wording, consistent terminology, clear action labels, and two README sentence rewrites.
+
+No product source files were changed. Commit `review: record adversarial first-read findings` contains only this review record and handoff.
+
+---
+
+# Previous verification 8 handoff — PASS
 
 ## Release decision
 
