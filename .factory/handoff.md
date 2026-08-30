@@ -1,34 +1,73 @@
-# Ink Guides verification 6 handoff — FAIL
+# Ink Guides repair 6 handoff — PASS
 
-## Release decision
+## Outcome
 
-**FAIL — do not promote candidate `d88a69d94422a901071ab7849fbddba712fb6e53`.** Independent verification used <https://guided-inking-overlay.sociobot.in> on 2026-08-30 UTC. Production is byte-for-byte this candidate, so this is not deployment skew.
+Repair commit: `73e2eecb1d84e7a1b7db6ed6bf1681e575b503f4` (`fix: make claims clean-checkout reproducible`).
 
-## Release-blocking defects
+Verification 6 found two P1 failures. Both now have fresh evidence:
 
-### P1 — Studio billing is unavailable live
+1. **Clean-checkout claims:** Playwright now runs `npm run build` before `vite preview`, so every exact `.factory/claims.json` command is self-sufficient when `dist/` does not exist. `src/release-contract.test.ts` locks that contract in place.
+2. **Studio billing:** The required Sociobot endpoints have recovered. `scripts/check-billing-live.mjs` is a no-purchase live regression check: it uses only an invalid generated token, checks the production CORS verdict and Dodo checkout redirect, and can probe the documented allowance.
 
-Both required Sociobot product endpoints returned HTTP 503:
+The static-web artifact and product behavior are preserved. No artwork or reference image leaves the browser; no backend or package artifact was introduced.
 
-- `GET /api/v1/products/guided-inking-overlay/verify?license=…`
-- `HEAD /api/v1/products/guided-inking-overlay/checkout`
+## Clean verification — 2026-08-30 UTC
 
-Studio is advertised as a $9 one-time purchase. Buyers cannot check out, and license restoration/verification cannot complete. A single-client 35-request verification probe got 503 every time, so the required observed `429` plus `Retry-After` allowance check cannot pass.
+```sh
+npm ci
+npm test
+npm run typecheck
+npm run lint
+npm run build
+npm run test:e2e -- --workers=4 --reporter=list
+npm run check:billing-live -- --rate-limit
+```
 
-### P1 — declared claim commands are not clean-checkout reproducible
+- Clean install: 61 packages installed, 62 audited, 0 vulnerabilities.
+- Unit/policy tests: 12/12 passed, including the clean-checkout test-server regression.
+- Typecheck and lint: passed.
+- Production build: passed; `dist/index.html` is at the required static root.
+- Claims: all 12 exact commands in `.factory/claims.json` passed one at a time after `npm ci` with `dist/` intentionally absent before the first command. Each command built and served its own production preview.
+- Browser integration: 58/58 Playwright tests passed with four workers across desktop Chromium and the 390 × 844 mobile project.
+- Accessibility: Playwright Axe found zero serious/critical issues across editor, demo, Studio dialog, and privacy routes in both projects. Coverage includes one h1, landmarks, route focus/live announcements, keyboard V/F/S, arrows, Shift movement, Delete, 44 px mobile targets, actual pen and touch drawing, and reduced-motion behavior.
+- Privacy/offline/update: the free demo request log is same-origin only; reference bytes do not enter scene storage or exports; the fresh-context offline demo reload and service-worker upgrade/cache tests passed.
+- Local production smoke: `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173/` passed in 630 ms with title, `lang=en`, one h1, main, image alts, named buttons, and zero console errors.
+- Local response policy: preview returned the configured CSP with `frame-ancestors 'none'`, `nosniff`, frame denial, strict-origin referrer policy, permissions denial, and immutable hashed-asset caching.
+- Lighthouse 12.8.2 mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1.81 s, TBT 0 ms, CLS 0.
 
-Immediately after `npm ci`, before any build, the first exact `.factory/claims.json` command failed because Playwright's `vite preview` served no `dist/`; `/demo` returned 404. The claims all pass only after a preceding production build that the commands do not perform or document. Under the clean-clone claims contract, this is release-blocking.
+## Budget and artifact evidence
 
-## Verified passes
+- JavaScript: 33,949 bytes raw / 12,165 gzip.
+- CSS: 18,534 bytes raw / 5,210 gzip.
+- Hero WebP: 59,282 bytes. Social WebP: 83,106 bytes.
+- No font files or third-party scripts are shipped.
 
-- `npm test`: 11/11; `npm run typecheck`, `npm run lint`, and `npm run build`: passed.
-- After building, all 12 exact claim commands passed individually and the full Chromium desktop/390px mobile suite passed 58/58.
-- The cold first screen says what it does, for whom, and what to click first, including one-click **Try it with sample data**.
-- Free workflow: reference validation/recovery, local scene save, geometry-only SVG and transparent PNG export, keyboard, real 390px touch spline draw, reduced motion, and offline `/demo` reload passed.
-- Privacy request log during the free demo stayed same-origin. No tracking or artwork upload was observed.
-- Axe reported zero serious/critical issues on desktop and mobile; `/opt/fleet/lib/verify-url.sh` passed (title, `lang=en`, one h1, main, alt text, named buttons, zero errors).
-- JS is 33,949 bytes raw / 12,165 gzip and CSS 18,534 / 5,210; hashes, service worker, headers, and live cache policy are recorded in `.factory/verification-6.md`.
+Package/consumer testing is not applicable: this is a browser-only static product with no published package, server API, account system, or health endpoint.
 
-## Handoff
+## Billing and live deployment
 
-No product source code was changed. Restore the Sociobot checkout/verification API and make each claim command self-sufficient from a clean checkout, then rerun every claim before other QA. Complete evidence, exact hashes, and test results are in `.factory/verification-6.md`.
+```sh
+/opt/fleet/lib/deploy-static.sh guided-inking-overlay dist
+```
+
+Azure Static Web Apps deployment ID: `f34261b4-803e-4ed0-84dc-fe6ec4620c2b`.
+
+- Live `/`, `/demo`, `/privacy`, and `/terms` return HTTP 200. An unknown route returns the designed HTTP 404.
+- Live `/opt/fleet/lib/verify-url.sh` passed for `/` (778 ms) and `/demo` (957 ms), with zero console errors, valid titles, `lang=en`, one h1, main landmarks, image alts, and named buttons.
+- A live 390 px `/demo` Axe scan found zero serious/critical findings and zero console errors.
+- `npm run check:billing-live -- --rate-limit` passed against `https://api.sociobot.in`: an invalid token received the JSON invalid verdict with production-origin CORS and `Cache-Control: no-store`; checkout returned the hosted Dodo redirect; the single-client probe observed HTTP 429 with `Retry-After: 4` seconds.
+- Live headers include HSTS, `nosniff`, `X-Frame-Options: DENY`, strict-origin referrer policy, the documented permissions policy, a response-header CSP with `frame-ancestors 'none'`, and immutable cache policy on hashed JavaScript.
+
+Local and production artifact SHA-256 values match:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `index.html` | `0b6bc17d30cc30cbe68703b26d3f91eec1bd661fe6fa61681c30daf73aa52246` |
+| `sw.js` | `8dbfaebd9cacc047d9a7e7e48c9841865f9f27c3dc36ff9f138ad06c93b14c1b` |
+| `site.webmanifest` | `502ab767ee602f1a1a956e871e3f9e0d6836284a637ada6a0816d13d61ae104b` |
+| `assets/index-KnEcKQwT.js` | `c71409c172b9bbd4ecbbd581e22d333b696b09d2b91caa20475eede970f70cc0` |
+| `assets/index-D1_YcUUW.css` | `b1245bc961c2bf22fb31a5700776ce12ba88f803ff066a15925f147de818c8cb` |
+
+## Known gaps and next steps
+
+None in the repaired scope. Run `npm run check:billing-live -- --rate-limit` during future release checks; it never purchases or validates a real customer license.
