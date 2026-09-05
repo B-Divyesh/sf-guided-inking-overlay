@@ -1,28 +1,26 @@
-# Draw perspective and curved inking guides — repair 8 handoff
+# Draw perspective and curved inking guides — verification 10 handoff
 
 ## Result
 
-**PASS — the strict review's one remaining finding is fixed.** The persistent sample banner and status toast now live inside the existing main landmark. A fresh Axe scan of the populated demo reports zero violations on desktop and phone.
+**PASS — independent verification 10 found zero findings and zero untested claims.** The deployed product matches the implementation candidate and passed clean-checkout, live desktop, and live phone checks.
 
 ## Versions
 
 - Implementation: `5fa35ae6975fb4f0b30ed9fdd1a15dff2e534beb` (`fix: keep demo status inside main landmark`).
-- Prior review/documentation baseline: `f17e9e6c0ccf688ed3e3fff4a07b3ed9f435017c`.
-- Static deployment: `41049c75-6bdc-4e60-8b51-114f213f8b30` to the existing `sf-guided-inking-overlay` Static Web App.
+- Documentation baseline: `ec00a0bf4c8f161fe6b57051c9b09231304cd02d` (`docs: record repair 8 verification`).
+- Live URL: <https://guided-inking-overlay.sociobot.in>.
 
-## What changed
+## Verification 10 result
 
-- Moved the persistent **Demo — sample data, nothing is saved** banner into `<main>`. It remains sticky on desktop and sits normally in the phone layout.
-- Moved the temporary status toast into the same main landmark, so populated status feedback is also landmark-contained.
-- Strengthened the browser Axe checks: demo, Studio dialog, and privacy scans now fail on every Axe violation, not only serious or critical ones.
-- Added an outcome check that the visible demo banner, Reset demo, and Start for real actions remain available inside the main product area without an Axe finding.
-- Copied the verb-first, 93-character catalog description to `/work/.evidence/catalog-description.txt`.
+- Fresh desktop and phone contexts named the job, audience, and sample action before scrolling.
+- The one-click sample opened with Rainy station panel at `13 fan lines · 1 curved guide`, a persistent demo label, and the named sample scenes.
+- Saving a demo scene, resetting it, and leaving demo did not change a separately seeded real workspace.
+- The live shell and static assets matched the local candidate by SHA-256.
+- No product code was changed during this verification. The complete report is `.factory/verification-10.md`.
 
-## Current strict-review finding
+## Findings
 
-| Finding | Disposition | Evidence |
-| --- | --- | --- |
-| F-2-1: persistent demo banner outside landmarks | Fixed | Fresh live desktop and phone `/demo` scans each returned zero Axe violations. The banner, Reset demo, and Start for real remained visible and usable. |
+None. F-2-1 remains fixed: fresh live desktop and phone `/demo` Axe scans returned zero violations, and the demo banner/actions remain inside `main`.
 
 ## Earlier findings
 
@@ -41,7 +39,7 @@
 
 ## Verification from documented clean setup
 
-After `npm ci` (61 packages added, 0 audit vulnerabilities):
+After `npm ci` in a clean checkout (61 packages added, 0 audit vulnerabilities):
 
 | Command or check | Result |
 | --- | --- |
@@ -49,14 +47,14 @@ After `npm ci` (61 packages added, 0 audit vulnerabilities):
 | `npm run typecheck` | PASS |
 | `npm run lint` | PASS |
 | `npm run build` | PASS — `dist/` created |
-| All 12 exact commands in `.factory/claims.json`, run separately | PASS — one tagged observable test each |
+| All 12 exact commands in `.factory/claims.json`, run separately before a separate build | PASS — one tagged observable test each |
 | `npm run test:e2e` | PASS — 70/70 desktop and 390 × 844 phone tests |
 | `npm run check:billing-live -- --rate-limit` | PASS — invalid verdict, hosted checkout redirect, HTTP 429, `Retry-After: 4` |
 | `/opt/fleet/lib/verify-url.sh` on live root | PASS — HTTPS 200, title, `lang`, one H1, main, alt text, named buttons, no console errors |
 
 The fresh production build is 34,831 bytes of JS (12,246 gzip), 20,099 bytes of CSS (5,519 gzip), and has a 59,282-byte hero WebP. It ships no fonts.
 
-## Live HTTPS checks
+## Live HTTPS checks and evidence
 
 The deployed domain is <https://guided-inking-overlay.sociobot.in>.
 
@@ -65,12 +63,13 @@ The deployed domain is <https://guided-inking-overlay.sociobot.in>.
 - In each fresh context, one click opened the populated Rainy station sample (`13 fan lines · 1 curved guide`), showed the persistent sample label, saved demo-only data, reset it, and returned to the seeded real scene unchanged. Each populated `/demo` Axe scan returned zero violations and each console-error list was empty.
 - `/`, `/demo`, `/privacy`, and `/terms` return 200 with their route titles. An unknown route returns the designed 404 with HTTP 404, one H1, main, and a home action.
 - After a successful online demo visit, a fresh controlled context reloaded `/demo` offline with its title, banner, and populated sample intact.
+- Fresh desktop and phone populated-demo Axe scans returned zero violations. Normal-route console error lists were empty. Reduced motion switched scrolling to `auto` and transitions to effectively zero duration.
 
-Evidence is under `/work/.evidence/guided-inking-overlay-live/`, including root and demo desktop/phone captures and the verifier JSON.
+Verification-10 evidence is under `/work/.evidence/guided-inking-overlay-verify-10/`, including root and demo desktop/phone captures and `verify-url` output.
 
 ## Scope and honest limits
 
-Ink Guides is a static, local-first browser tool. It has no product backend, database, tenant boundary, health endpoint, CLI, library package, or sign-in flow; those checks do not apply. No charge or customer purchase was created. Hosted checkout, invalid-license recovery, and rate limiting were checked live; the valid-license path uses the recorded browser-test fixture. The brief's fewer-than-three-redraw success measure needs an artist study, which was not conducted.
+Ink Guides is a static, local-first browser tool. It has no product backend, database, tenant boundary, health endpoint, CLI, library package, desktop artifact, or sign-in flow; those checks do not apply. No charge or customer purchase was created. Hosted checkout, invalid-license recovery, and rate limiting were checked live; the valid-license path uses the recorded browser-test fixture. The brief's fewer-than-three-redraw success measure needs an artist study, which was not conducted; it is not a public product claim or a release defect.
 
 ## Run, test, and deploy
 
