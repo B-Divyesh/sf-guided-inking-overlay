@@ -222,7 +222,7 @@ test('hard 404 ships complete social metadata', async () => {
   ]) expect(html).toContain(marker);
 });
 
-test('demo, Studio dialog, and privacy route have no serious accessibility issues', async ({ page }) => {
+test('demo, Studio dialog, and privacy route have no Axe violations', async ({ page }) => {
   await page.goto('/demo');
   for (const scan of [
     async () => new AxeBuilder({ page }).analyze(),
@@ -237,14 +237,18 @@ test('demo, Studio dialog, and privacy route have no serious accessibility issue
     },
   ]) {
     const results = await scan();
-    expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
+    expect(results.violations).toEqual([]);
   }
 });
 
-test('demo has no complementary landmark nested inside the editor', async ({ page }) => {
+test('demo banner remains available without an Axe landmark violation', async ({ page }) => {
   await page.goto('/demo');
+  const main = page.getByRole('main');
+  await expect(main.getByRole('note', { name: 'Demo mode' })).toContainText('Demo — sample data, nothing is saved');
+  await expect(main.getByRole('button', { name: 'Reset demo' })).toBeVisible();
+  await expect(main.getByRole('link', { name: 'Start for real' })).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.filter((violation) => violation.id === 'landmark-complementary-is-top-level')).toEqual([]);
+  expect(results.violations).toEqual([]);
 });
 
 test('pen-style and touch pointers draw splines at 390px', async ({ page }) => {

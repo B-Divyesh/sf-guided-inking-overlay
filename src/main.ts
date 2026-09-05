@@ -110,8 +110,8 @@ function footer(): string {
 
 function studioPage(): string {
   return `${header()}
-  ${demoMode ? `<div class="demo-banner" role="note" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved</strong><span>Try the prepared station and awning guides.</span><div><button class="secondary" id="reset-demo">Reset demo</button><a class="primary" href="/" data-route data-leave-demo>Start for real</a></div></div>` : ''}
   <main id="main" class="studio">
+    ${demoMode ? `<div class="demo-banner" role="note" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved</strong><span>Try the prepared station and awning guides.</span><div><button class="secondary" id="reset-demo">Reset demo</button><a class="primary" href="/" data-route data-leave-demo>Start for real</a></div></div>` : ''}
     <section class="intro" aria-labelledby="page-title">
       <div class="intro-copy"><p class="eyebrow">Guides for comic and concept artists</p><h1 id="page-title" tabindex="-1">Draw perspective and curved inking guides</h1><p class="intro-lede">Build reusable guide layers over a private reference, then export them to your art app.</p>${demoMode ? '' : '<div class="intro-action"><a class="primary" href="/demo" data-route>Try it with sample data</a><span>Loads two prepared guide scenes in a separate demo.</span></div>'}<ul class="hero-facts"><li>Works offline after your first visit.</li><li>References stay on this device.</li><li>Free editor included. Studio costs $9 once.</li></ul></div>
     </section>
@@ -167,9 +167,9 @@ function studioPage(): string {
       </div>
     </section>
     <section class="studio-offer" id="studio-price" aria-labelledby="studio-title"><div><p class="eyebrow">Studio plan</p><h2 id="studio-title">Save 20 scenes and export larger PNGs.</h2><p>Studio adds 20 local scenes and 2400 × 1600 PNG export. Drawing and SVG export stay free.</p></div><div class="price"><strong>$9</strong><span>one time</span><button class="primary" id="offer-unlock">Buy Studio once</button></div></section>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </main>
   ${footer()}
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <dialog id="help-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close help">×</button><p class="eyebrow">Three steps</p><h2>How to make a guide layer</h2><ol><li><strong>Aim.</strong> Choose Aim fan and drag the coral pin. Adjust density, rotation, and spread.</li><li><strong>Draw.</strong> Choose Draw curved guide, then draw one curve on the canvas. Ink Guides repeats it in parallel.</li><li><strong>Export.</strong> Save the scene or export transparent SVG and PNG geometry.</li></ol><p class="key-help">Keyboard: V selects. F aims the fan. S draws a curved guide. Arrow keys move points. Shift moves 10 pixels. Delete removes a curved guide.</p></form></dialog>
   <dialog id="license-dialog"><form method="dialog"><button class="dialog-close" aria-label="Close Studio panel">×</button><p class="eyebrow">Ink Guides Studio</p><h2>Buy Studio once.</h2><p class="license-copy">Studio costs $9 once. It adds 20 saved scenes and 2400 × 1600 PNG export. SVG export and accessibility remain free.</p><a class="primary buy-link" href="${BILLING_BASE}/api/v1/products/${SLUG}/checkout">Buy Studio — $9</a><p class="merchant">Sociobot/Dodo handles checkout and refunds as the merchant of record.</p><hr><label for="license-token">Have a license? Paste it here</label><input id="license-token" type="text" autocomplete="off" spellcheck="false"><button value="cancel" type="button" class="secondary full" id="restore-license">Verify and restore purchase</button><button value="cancel" type="button" class="text-button" id="remove-license" hidden>Remove license from this device</button><p id="license-status" class="form-status" role="status"></p><p class="legal-links"><a href="/privacy" data-route>Privacy</a> · <a href="/terms" data-route>Terms</a></p></form></dialog>`;
 }
