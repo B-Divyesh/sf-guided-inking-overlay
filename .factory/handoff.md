@@ -1,26 +1,33 @@
-# Ink Guides verification 9 handoff — PASS
+# Ink Guides strict review 2 handoff — FAIL
 
 ## Result
 
-**PASS — candidate `0d5958e6fbac85451fb7be686bcf1f4d4e0702f4` is accepted at <https://guided-inking-overlay.sociobot.in>.**
+**FAIL — candidate `0d5958e6fbac85451fb7be686bcf1f4d4e0702f4` has 1 low-severity finding and 0 untested claims.**
 
-Fresh verification found no release-blocking defect. Production matches the candidate byte-for-byte, the complete local-first guide workflow works on desktop and 390 px mobile, all 12 declared claims pass, and the previously reported deployment-only billing failure does not reproduce.
+Production matches the reviewed candidate and the product workflow passes. This review cannot declare PASS because the acceptance rule requires zero findings at every severity.
 
-## What was verified
+## Remaining finding
 
-- Mandatory first-read gate: clear job, audience, next action, and a visible one-click sample demo.
-- Clean checkout: `npm ci`, 12/12 unit tests, typecheck, lint, exact production build, 35/35 desktop browser tests, and 35/35 mobile browser tests.
-- Every exact `.factory/claims.json` command: 12/12 passed individually from the installed clean checkout.
-- Independent live workflow: 70/70 assertions covering imports, invalid input recovery, fan boundary, mouse/touch/keyboard drawing, demo storage, 3-scene boundary, SVG/PNG output, invalid-license recovery, privacy requests, routes, reduced motion, and PWA update/offline reload.
-- Accessibility: zero serious/critical Axe findings; Lighthouse accessibility 100; keyboard focus, skip link, 44 px targets, and 390 px overflow passed.
-- Performance: Lighthouse mobile 98; LCP 1.4 s, TBT 170 ms, CLS 0. JS is 12.24 KB gzip, CSS 5.52 KB gzip, and the hero is 59.28 KB.
-- Privacy/security: complete free flow made only same-origin requests; reference data was absent from storage and exports; security headers and immutable hashed-asset caching are live.
-- Billing: invalid verification and hosted checkout redirect work. One-client allowance was 30 successful requests; request 31 returned 429 with `Retry-After: 4`.
-- Deployment identity: SHA-256 matched local `dist/` for HTML, worker, JS, CSS, hero/social images, manifest, robots, sitemap, and 404 assets.
+A fresh Axe 4.10.2 scan of `/demo` reports one moderate `region` violation. Its exact target is the persistent `.demo-banner`, which is outside every landmark. The earlier `verification-9.md` attribution to the toast is incorrect; a separate populated root scan found no toast violation.
 
-## Known gap
+Place the demo banner inside a suitable landmark, or give its container an appropriate landmark without restoring the earlier nested complementary landmark problem. Add an Axe regression that fails on every violation. Product code was not changed during this review.
 
-One non-blocking P3 Axe `region` advisory appears only while the transient toast contains text. There are no serious or critical accessibility findings. Details and exact evidence are in [verification-9.md](verification-9.md).
+## What passed
+
+- Fresh desktop and 390 × 844 phone first-read, demo, touch, keyboard, target-size, reduced-motion, and recovery checks.
+- Demo population, persistent label, isolated storage, reset, leave/discard, and preservation of real data.
+- Reference import recovery, reusable scenes, free limits, SVG/PNG output, offline reload, and worker cache update.
+- All 12 exact claim commands, 12/12 unit tests, typecheck, lint, build, and 70/70 browser tests.
+- Live URL verification, security headers, route titles, legal pages, deliberate designed 404, same-origin free flow, and production hash comparison.
+- Live billing invalid verdict, hosted checkout redirect, and 429 with `Retry-After: 4`.
+- Lighthouse 12.8.2: 100 performance, 100 accessibility, 100 best practices, and 100 SEO; LCP 1.3 s and CLS 0.
+
+## Reviewed versions
+
+- Assigned implementation candidate: `0d5958e6fbac85451fb7be686bcf1f4d4e0702f4`.
+- Last product-code commit: `f1aa8a4bab3677576ea11d9dbf40a6152a3e4316`.
+- Documentation baseline: `b57415f37f4460dfb3bac02ce447e37d8a336230`.
+- Review report: `.factory/review-2.md`.
 
 ## Reproduce
 
@@ -34,4 +41,4 @@ npm run test:e2e
 npm run check:billing-live -- --rate-limit
 ```
 
-No product code was modified. This handoff and `.factory/verification-9.md` are the only intended repository changes.
+Run each exact command in `.factory/claims.json` separately. The remaining finding reproduces by running Axe on a fresh `/demo` page and inspecting the moderate `region` result for `.demo-banner`.
